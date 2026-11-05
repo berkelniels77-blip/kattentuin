@@ -247,3 +247,73 @@
     width: min(100%, max(170px, calc(100dvh - 344px - env(safe-area-inset-top) - env(safe-area-inset-bottom))));
   }
 }
+
+#capy-dialog { background:#f7efe5; color:#523746; }
+.capy-house { gap:5px; }
+.capy-house .house-header { gap:12px; margin:2px 0; }
+.house-header span { color:#89628f; }
+.house-header h2 { letter-spacing:-.035em; }
+#capy-dialog .close { background:#fffaf4; box-shadow:0 2px 0 #ead7d1; }
+.capy-house .capy-top { margin-bottom:5px; gap:8px; }
+.capy-top > span { padding:7px 11px; border-radius:16px; background:#fff9ee; border:1px solid #eadcc9; }
+#capy-options { display:flex; gap:5px; }
+.capy-house .capy-button { background:#eee0f0; color:#58395e; }
+.capy-house .capy-button[aria-pressed="true"] { color:#fff8f7; background:#745682; box-shadow:0 3px 0 #5e456e; }
+.capy-house #capy-room { gap:9px; }
+.capy-house .capy-needs { gap:5px; }
+.capy-house .capy-needs label {
+  background:#fffbf6;
+  border:1px solid #eadbd4;
+  color:#563945;
+  font-weight:750;
+  padding:7px 3px;
+}
+.capy-house .capy-needs meter { margin-top:3px; }
+.capy-house .capy-scene {
+  --wall:#f1dce9;
+  --rail:#bd8eaa;
+  --floor:#ddad98;
+  --stripe:#ffffff2b;
+  border:4px solid #fff9f1;
+  box-shadow:0 3px 0 #ead5cb;
+  border-radius:24px;
+  padding-top:12px;
+}
+.capy-house .capy-scene h3 { font-size:.87rem; }
+.capy-house .house-window { border-color:#fff2de; opacity:.9; }
+#capy-furniture { right:5%; font-size:clamp(2rem,11vw,4.6rem); }
+.capy-house .capy-pet { width:min(89%,360px); display:grid; place-items:center; }
+.capy-portrait {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 8px 7px #5d35403c);
+}
+[data-coat="cocoa"] .capy-portrait { filter:brightness(.78) saturate(.88) drop-shadow(0 8px 7px #5d35403c); }
+[data-coat="cream"] .capy-portrait { filter:brightness(1.19) saturate(.74) drop-shadow(0 8px 7px #5d35403c); }
+[data-coat="rose"] .capy-portrait { filter:hue-rotate(-26deg) saturate(.87) drop-shadow(0 8px 7px #5d35403c); }
+.capy-markings { position:absolute; inset:0; pointer-events:none; }
+[data-pattern="spots"] .capy-markings {
+  background:radial-gradient(ellipse at 39% 60%,#fff0ce9e 0 4%,transparent 5%),
+    radial-gradient(ellipse at 34% 66%,#fff0ce90 0 3%,transparent 4%);
+}
+[data-pattern="socks"] .capy-markings {
+  background:radial-gradient(ellipse at 43% 76%,#fff0ce8c 0 4%,transparent 5%),
+    radial-gradient(ellipse at 56% 76%,#fff0ce8c 0 4%,transparent 5%);
+}
+.capy-house .capy-message { padding:6px 12px; margin-bottom:8px; font-weight:680; }
+.care-dock { min-width:0; padding:7px; border:1px solid #eadbd4; border-radius:16px; background:#fffaf3; }
+#capy-pantry { color:#785767; font-size:.76rem; font-weight:750; padding:0 3px 4px; }
+.capy-house .capy-actions .capy-button { background:#fae0af; color:#614230; }
+.capy-house .capy-rooms { padding-bottom:3px; }
+.capy-house .capy-products article { background:#fffaf4; border:1px solid #eadbd4; }
+.capy-house .capy-products button:not(:disabled) { background:#f9dfa8; color:#4f382e; }
+[data-theme="dark"] #capy-dialog { background:#30253d; color:#fbecd9; }
+[data-theme="dark"] .house-header span { color:#dfbbec; }
+[data-theme="dark"] .capy-top > span,
+[data-theme="dark"] .capy-house .capy-products article,
+[data-theme="dark"] .capy-house .capy-needs label,
+[data-theme="dark"] .care-dock { color:#fbecd9; background:#483651; border-color:#63506d; }
+[data-theme="dark"] #capy-pantry { color:#e8c6de; }
