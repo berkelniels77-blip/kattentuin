@@ -1,3 +1,4 @@
+import { initWheel, wheelCats } from './wheel.js';
 import { initCapybara } from './capy.js';
 import { initFeedback } from './effects.js';
 import { maxLives, replay, runScore } from './game.js';
@@ -75,9 +76,9 @@ function write(key, value) {
   try { localStorage.setItem(prefix + key, JSON.stringify(value)); return true; }
   catch { byId('storage').hidden = false; return false; }
 }
-function image(file) {
+function image(file, directory = './assets/') {
   const img = document.createElement('img');
-  img.src = './assets/' + file;
+  img.src = directory + file;
   img.alt = '';
   return img;
 }
@@ -105,7 +106,7 @@ function showHome(moveFocus = true) {
   byId('home-speed').hidden = !bonus;
   byId('home-speed').textContent = '⚡ ' + scoreText(bonus) + ' snelheidspunten';
   refreshWallet();
-  if (moveFocus) play.focus();
+  if (moveFocus) { play.focus(); visitWheel(); }
 }
 function openLevel(next, reset = false) {
   pauseClock();
@@ -338,7 +339,8 @@ function renderCell(index) {
   const mark = marks[index];
   const cell = cells[index];
   const wrong = mark === 2 && attempts.includes(index) && !level.solution.includes(index);
-  const signature = mark + ':' + (mark === 1 ? selectedSkin() : wrong ? 'wrong' : '');
+  const skin = mark === 1 ? selectedSkin() : '';
+  const signature = mark + ':' + (skin || (wrong ? 'wrong' : ''));
   if (cell.dataset.mark === signature) return;
   cell.dataset.mark = signature;
   const description = wrong ? 'rood kruisje' : ['leeg','kat','kruisje'][mark];
@@ -346,7 +348,8 @@ function renderCell(index) {
   cell.setAttribute('aria-label', `Rij ${Math.floor(index / level.n) + 1}, kolom ${index % level.n + 1}, ${color}, ${description}`);
   if (mark === 0) cell.replaceChildren();
   else {
-    const icon = image(mark === 1 ? 'skin-' + selectedSkin() + '.svg' : 'cross.svg');
+    const icon = skin ? image('skin-' + skin + '.svg', wheelCats.some(cat => cat.id === skin) ? './' : './assets/')
+      : image('cross.svg');
     if (mark === 2) icon.className = wrong ? 'cross wrong-cross' : 'cross';
     cell.replaceChildren(icon);
   }
@@ -402,6 +405,9 @@ const skins = [
 function inventory() {
   const saved = read('wardrobe', {});
   const owned = skins.filter(skin => skin.price === 0 || saved.owned?.includes(skin.id)).map(skin => skin.id);
+  for (const cat of wheelCats) {
+    if (read('wheel', {}).cats?.includes(cat.id)) owned.push(cat.id);
+  }
   const paid = Object.fromEntries(skins.filter(skin => owned.includes(skin.id)).map(skin =>
     [skin.id, saved.paid?.[skin.id] ?? skin.previousPrice ?? 0]
   ));
@@ -414,7 +420,7 @@ function coins(wardrobe = inventory()) {
     if (!saved.completed && !best.has(item.id)) return total;
     return total + (saved.coinReward ?? 10);
   }, 0);
-  return earned - Object.values(wardrobe.paid).reduce((sum, amount) => sum + amount, 0) - (read('capybara', null)?.spent || 0);
+  return earned + (read('wheel', {}).coins || 0) - Object.values(wardrobe.paid).reduce((sum, amount) => sum + amount, 0) - (read('capybara', null)?.spent || 0);
 }
 function refreshWallet() {
   const amount = coins();
@@ -453,7 +459,7 @@ async function chooseSkin(skin) {
   const change = () => {
     const wardrobe = inventory();
     const owned = wardrobe.owned.includes(skin.id);
-    if (!owned && coins(wardrobe) < skin.price) return;
+    if (!owned && (skin.price === undefined || coins(wardrobe) < skin.price)) return;
     if (!owned) {
       wardrobe.owned.push(skin.id);
       wardrobe.paid[skin.id] = skin.price;
@@ -498,6 +504,7 @@ window.addEventListener('storage', event => {
 
 const feedback = initFeedback(read, write);
 const updateSleep = initCapybara({read, write, coins, refreshWallet, transact, feedback});
+const visitWheel = initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback});
 const news = byId('news-dialog');
 byId('news-open').onclick = () => news.showModal();
 news.addEventListener('close', () => write('seen-news-002', true));
@@ -630,6 +637,7 @@ try {
   showHome(false);
   if (!read('seen-news-002', false)) news.showModal();
   updateSleep();
+  visitWheel();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));
 } catch (error) {
   byId('load-error').hidden = false;

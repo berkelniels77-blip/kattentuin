@@ -36,7 +36,10 @@
       <div class="home-actions">
         <button id="play" class="big orange" disabled>Laden…</button>
         <button id="capy-open" class="big violet" type="button">🛖 Capibarahuis</button>
-        <button id="news-open" class="news-link" type="button">Wat is er nieuw?</button>
+        <div class="home-links">
+          <button id="wheel-open" class="news-link" type="button">🎡 Prijzenrad</button>
+          <button id="news-open" class="news-link" type="button">Wat is er nieuw?</button>
+        </div>
         <button id="shop-open" class="shop-open"><img src="./assets/coin.svg" alt=""><span id="home-coins">0</span> <span>Katjeswinkel</span></button>
       </div>
       <p id="home-speed" class="speed-award" hidden></p>
@@ -80,6 +83,15 @@
       <li><strong>Een eigen capibara</strong> Geef haar een naam, richt vier kamers in en gebruik je gewone muntjes voor snacks, speelgoed en accessoires.</li>
     </ul>
     <form method="dialog"><button class="big orange">Verder spelen</button></form>
+  </dialog>
+  <dialog id="wheel-dialog" aria-labelledby="wheel-title">
+    <header><div><p id="wheel-streak" class="wheel-streak"></p><h2 id="wheel-title">Dagelijks prijzenrad</h2></div>
+      <form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <div class="wheel-stage" aria-hidden="true"><div id="wheel-disk"></div><span class="wheel-pointer"></span><span class="wheel-hub">✦</span></div>
+    <p id="wheel-result" class="wheel-result" role="status"></p>
+    <button id="wheel-spin" class="big orange" type="button">Draai aan het rad</button>
+    <div id="wheel-cats" class="wheel-cats" aria-label="Gewonnen radkatjes"></div>
+    <details><summary>Prijzen en kansen</summary><ul id="wheel-odds"></ul><p>Win je een katje of accessoire opnieuw, dan krijg je 65 muntjes.</p></details>
   </dialog>
   <dialog id="capy-sleep-screen" aria-labelledby="capy-sleep-title">
     <div class="sleep-moon" aria-hidden="true">🌙</div>

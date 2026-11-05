@@ -327,3 +327,31 @@
 #capy-sleep-screen .sleep-moon { font-size:2.6rem; margin-bottom:9px; }
 #capy-sleep-screen p { margin:8px 0; }
 #capy-wake { margin:10px 0 0; }
+
+.home-links { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.home-links button { font-size:.85rem; }
+.wheel-streak { font-size:.85rem; font-weight:850; color:#83588a; }
+[data-theme="dark"] .wheel-streak { color:#edc6f0; }
+.wheel-stage { position:relative; width:min(65vw, 250px, 34dvh); aspect-ratio:1; margin:10px auto; }
+#wheel-disk {
+  width:100%; height:100%; border-radius:50%; border:5px solid #fff1d9;
+  box-shadow:0 3px 0 #ac799f, 0 6px 16px #58394655;
+}
+#wheel-disk span {
+  position:absolute; inset:8% 0 0; color:#57384f; text-align:center; font-weight:900;
+  transform:rotate(var(--at)); transform-origin:50% 46%;
+}
+.wheel-pointer {
+  position:absolute; z-index:2; left:50%; top:-5px; width:22px; height:24px; transform:translateX(-50%);
+  background:#744967; clip-path:polygon(0 0, 100% 0, 50% 100%);
+}
+.wheel-hub {
+  position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%);
+  width:44px; height:44px; display:grid; place-items:center; border-radius:50%;
+  color:#70496a; background:#fff3d7; box-shadow:0 2px 5px #70496a55;
+}
+.wheel-result { text-align:center; font-weight:750; min-height:1.4em; margin:8px 0; }
+.wheel-cats { display:grid; gap:6px; }
+.wheel-cats button { display:flex; align-items:center; gap:8px; }
+.wheel-cats img { width:32px; height:32px; }
+#wheel-odds { display:grid; grid-template-columns:1fr 1fr; gap:3px 10px; font-size:.8rem; }

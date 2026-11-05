@@ -24,7 +24,9 @@ const items = [
   {id:'plant', label:'Vensterplant', icon:'🪴', cost:45, type:'Meubel', room:'kitchen'},
   {id:'bow', label:'Lavendelstrik', icon:'🎀', cost:48, type:'Accessoire'},
   {id:'crown', label:'Kroontje', icon:'👑', cost:85, type:'Accessoire'},
-  {id:'orange', label:'Mandarijntje', icon:'🍊', cost:32, type:'Accessoire'}
+  {id:'orange', label:'Mandarijntje', icon:'🍊', cost:32, type:'Accessoire'},
+  {id:'star-glasses', label:'Sterrenbril', icon:'🕶️', type:'Accessoire', wheel:true},
+  {id:'flower-wreath', label:'Bloemenkrans', icon:'🌸', type:'Accessoire', wheel:true}
 ];
 const actions = {
   pet:['♡','Aaien','joy',14,'Dat voelt fijn.'],
@@ -64,6 +66,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     reaction = '';
   });
   const get = () => read('capybara', null);
+  const availableAccessories = pet => items.filter(item => item.type === 'Accessoire' &&
+    (item.wheel ? read('wheel', {}).accessories?.includes(item.id) : pet?.stock[item.id]));
   function updateSleep() {
     clearTimeout(wakeTimer);
     const pet = get();
@@ -135,7 +139,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     if (!pet) return;
     if (view === 'shop') {
       const balance = coins();
-      $('capy-products').replaceChildren(...items.map(item => {
+      $('capy-products').replaceChildren(...items.filter(item => !item.wheel).map(item => {
         const owned = (pet.stock[item.id] || 0) > 0;
         const el = document.createElement('article');
         const label = document.createElement('strong');
@@ -264,7 +268,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     $('capy-color').value = pet?.color || 'honey';
     $('capy-pattern').value = pet?.pattern || 'plain';
     const accessory = $('capy-accessory');
-    accessory.replaceChildren(new Option('Geen', ''), ...items.filter(item => item.type === 'Accessoire' && pet?.stock[item.id])
+    accessory.replaceChildren(new Option('Geen', ''), ...availableAccessories(pet)
       .map(item => new Option(item.label, item.id)));
     accessory.value = pet?.accessory || '';
     render();
@@ -278,7 +282,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       if (sleeping(old)) return;
       const pet = old ? settlePet(old) : {needs:{food:80, water:80, clean:85, joy:85}, stock:{}, spent:0,
         room:'living', updated:Date.now(), sleepUntil:0};
-      Object.assign(pet, {name, color:$('capy-color').value, pattern:$('capy-pattern').value, accessory:$('capy-accessory').value});
+      Object.assign(pet, {name, color:$('capy-color').value, pattern:$('capy-pattern').value, accessory:availableAccessories(pet).some(item => item.id === $('capy-accessory').value) ? $('capy-accessory').value : ''});
       if (!save(pet)) return;
       view = 'room';
       react(old ? 'Een frisse nieuwe look!' : 'Welkom thuis, ' + name + '!');
