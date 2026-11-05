@@ -1,3 +1,5 @@
+import { createCapyModel } from './capy-model.js';
+
 const rooms = {
   living: {label:'Woonkamer', icon:'🛋️', actions:['pet','play']},
   kitchen: {label:'Keuken', icon:'🥕', actions:['feed','drink']},
@@ -54,6 +56,26 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   let view = 'room';
   let reaction = '';
   let reactionTimer;
+  const canvas = $('capy-canvas');
+  let model;
+  let modelUnavailable = false;
+  const roomProps = {living:'🛋️', kitchen:'🧺', bath:'🛁', bedroom:'🛏️'};
+  dialog.addEventListener('close', () => {
+    model?.stop();
+    clearTimeout(reactionTimer);
+    reaction = '';
+  });
+  canvas.addEventListener('webglcontextlost', event => {
+    event.preventDefault();
+    model?.stop();
+    model = null;
+    modelUnavailable = true;
+    render();
+  });
+  canvas.addEventListener('webglcontextrestored', () => {
+    modelUnavailable = false;
+    render();
+  });
   const get = () => read('capybara', null);
   function save(pet) {
     if (write('capybara', pet) === false) return false;
@@ -86,7 +108,19 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       ? '<ellipse cx="76" cy="98" rx="25" ry="18" fill="#fff2d2" opacity=".65"/><ellipse cx="105" cy="47" rx="11" ry="7" fill="#fff2d2" opacity=".65"/>'
       : pet.pattern === 'socks' ? '<path d="M61 118h24v12H61zm57 0h23v12h-23z" fill="#f7deb5"/>' : '';
     const accessory = items.find(item => item.id === pet.accessory)?.icon ?? '';
-    $('capy-pet').innerHTML = `<svg viewBox="0 0 220 160" aria-hidden="true">
+    if (!model && !modelUnavailable) {
+      model = createCapyModel(canvas);
+      modelUnavailable = !model;
+    }
+    canvas.hidden = !model;
+    $('capy-fallback').hidden = !!model;
+    $('capy-accessory-model').textContent = model ? accessory : '';
+    $('capy-sleep-model').hidden = !model || !sleeping;
+    if (model) {
+      model.setLook({fur:colors[pet.color] || colors.honey, pattern:pet.pattern, sleeping, happy:!!reaction, low});
+      return;
+    }
+    $('capy-fallback').innerHTML = `<svg viewBox="0 0 220 160" aria-hidden="true">
       <ellipse cx="107" cy="138" rx="74" ry="10" fill="#462d4428"/>
       <g stroke="#633f3c" stroke-width="3" stroke-linejoin="round">
         <path d="M57 111h28v19q-14 8-24 0zM116 112h27v18q-14 8-24 0z" fill="#9f694e"/>
@@ -126,10 +160,11 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       }));
       return;
     }
-    if (view !== 'room') return;
+    if (view !== 'room') { model?.stop(); return; }
     const room = rooms[pet.room];
     $('capy-scene').dataset.room = pet.room;
     $('capy-room-name').textContent = room.icon + ' ' + room.label;
+    $('capy-furniture').textContent = roomProps[pet.room];
     $('capy-decor').textContent = items.filter(item => item.room === pet.room && !item.effect && pet.stock[item.id])
       .map(item => item.icon).join(' ');
     portrait(pet);
@@ -232,8 +267,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   function openCapy(firstView) {
     view = firstView;
     if (!get()) edit();
-    render();
     dialog.showModal();
+    render();
   }
   $('capy-open').onclick = () => openCapy('room');
   $('shop-capy').onclick = () => {

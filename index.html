@@ -82,7 +82,8 @@
     <form method="dialog"><button class="big orange">Verder spelen</button></form>
   </dialog>
   <dialog id="capy-dialog" aria-labelledby="capy-title">
-    <header><h2 id="capy-title">Het capibarahuis</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <div class="capy-house">
+    <header class="house-header"><form method="dialog"><button class="round close" aria-label="Terug naar Kattentuin"><img src="./assets/arrow-left.svg" alt=""></button></form><div><span>CAPIBARAHUIS</span><h2 id="capy-title">Het capibarahuis</h2></div></header>
     <div class="capy-top"><span>🪙 <strong id="capy-wallet">0</strong> muntjes</span>
       <div id="capy-options" hidden><button id="capy-shop" class="capy-button">Winkel</button><button id="capy-edit" class="capy-button">Uiterlijk</button></div>
     </div>
@@ -96,13 +97,20 @@
       <button class="big orange" type="submit">Opslaan</button>
     </form>
     <section id="capy-room" hidden>
+      <div id="capy-needs" class="capy-needs"></div>
       <div id="capy-scene" class="capy-scene">
+        <div class="house-window" aria-hidden="true"></div>
+        <div id="capy-furniture" aria-hidden="true"></div>
         <h3 id="capy-room-name"></h3>
         <div id="capy-decor" aria-hidden="true"></div>
-        <button id="capy-pet" class="capy-pet" type="button" aria-label="Aai je capibara"></button>
+        <button id="capy-pet" class="capy-pet" type="button" aria-label="Aai je capibara">
+          <canvas id="capy-canvas" aria-hidden="true"></canvas>
+          <span id="capy-fallback" aria-hidden="true" hidden></span>
+          <span id="capy-accessory-model" aria-hidden="true"></span>
+          <span id="capy-sleep-model" aria-hidden="true" hidden>z Z</span>
+        </button>
+        <p id="capy-message" class="capy-message" role="status"></p>
       </div>
-      <p id="capy-message" class="capy-message" role="status"></p>
-      <div id="capy-needs" class="capy-needs"></div>
       <div id="capy-actions" class="capy-actions"></div>
       <nav id="capy-rooms" class="capy-rooms" aria-label="Kamers"></nav>
     </section>
@@ -111,6 +119,7 @@
       <p id="capy-shop-status" role="status"></p>
       <div id="capy-products" class="capy-products"></div>
     </section>
+    </div>
   </dialog>
   <dialog id="shop-dialog" aria-labelledby="shop-title">
     <header><h2 id="shop-title">Katjeswinkel</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
@@ -131,7 +140,7 @@
     <fieldset class="sound-settings">
       <legend>Geluid en trillingen</legend>
       <label><input type="checkbox" id="sound-enabled"> Geluidseffecten</label>
-      <label><input type="checkbox" id="haptics-enabled"> Trillingen</label>
+      <label><input type="checkbox" id="haptics-enabled" switch> Trillingen</label>
     </fieldset>
     <button id="restart" class="big violet" hidden>Level opnieuw beginnen</button>
     <details>

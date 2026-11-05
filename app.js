@@ -225,8 +225,10 @@ function paint(index) {
   if (stroke.visited.has(index)) return;
   stroke.visited.add(index);
   if (!canPlay(index)) return;
+  if (marks[index] === stroke.value) return;
   marks[index] = stroke.value;
   renderCell(index);
+  if (stroke.value === 2) feedback('cross');
 }
 board.onpointermove = event => {
   if (!stroke || event.pointerId !== stroke.id) return;
@@ -277,6 +279,7 @@ function canPlay(index) {
 function cross(index) {
   if (!canPlay(index)) return;
   marks[index] = marks[index] === 2 ? 0 : 2;
+  if (marks[index] === 2) feedback('cross');
   saveRun();
   renderCell(index);
 
