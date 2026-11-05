@@ -507,7 +507,7 @@ const updateSleep = initCapybara({read, write, coins, refreshWallet, transact, f
 const visitWheel = initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback});
 const news = byId('news-dialog');
 byId('news-open').onclick = () => news.showModal();
-news.addEventListener('close', () => write('seen-news-002', true));
+news.addEventListener('close', () => write('seen-news-003', true));
 
 const rankingUrl = location.origin === 'https://berkelniels77-blip.github.io'
   ? 'https://kattentuin-klassement.kattentuin-berkelniels77.workers.dev/api/leaderboard'
@@ -635,7 +635,7 @@ try {
   profile = read('ranking', null);
   byId('play').disabled = false;
   showHome(false);
-  if (!read('seen-news-002', false)) news.showModal();
+  if (!read('seen-news-003', false)) news.showModal();
   updateSleep();
   visitWheel();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));

@@ -56,12 +56,16 @@ export function initWheel({read, write, transact, refreshWallet, chooseSkin, sel
   const stops = prizes.map(prize => {
     const start = stop;
     stop += prize.weight;
-    if (prize.coins) {
-      const label = document.createElement('span');
-      label.style.setProperty('--at', (start + prize.weight / 2) * 3.6 + 'deg');
-      label.textContent = prize.icon;
-      disk.append(label);
+    const label = document.createElement('span');
+    label.style.setProperty('--at', (start + prize.weight / 2) * 3.6 + 'deg');
+    if (prize.coins || prize.cat) {
+      const icon = document.createElement('img');
+      icon.src = prize.cat ? './skin-' + prize.cat + '.svg' : './assets/coin.svg';
+      icon.alt = '';
+      label.append(icon);
     }
+    if (!prize.cat) label.append(prize.icon);
+    disk.append(label);
     return prize.color + ' ' + start + '% ' + stop + '%';
   });
   disk.style.background = 'conic-gradient(' + stops.join(',') + ')';

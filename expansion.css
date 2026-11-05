@@ -355,3 +355,14 @@
 .wheel-cats button { display:flex; align-items:center; gap:8px; }
 .wheel-cats img { width:32px; height:32px; }
 #wheel-odds { display:grid; grid-template-columns:1fr 1fr; gap:3px 10px; font-size:.8rem; }
+
+#wheel-disk span {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px;
+  font-size:.77rem;
+  line-height:1;
+}
+#wheel-disk span img { width:clamp(12px, 6vw, 22px); height:auto; }
+#wheel-disk span:has(img:only-child) img[src*="skin-"] { width:clamp(12px, 5vw, 19px); }
