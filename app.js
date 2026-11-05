@@ -411,7 +411,9 @@ window.addEventListener('storage', event => {
   if (level) cells.forEach((_, index) => renderCell(index));
 });
 
-const rankingUrl = './api/leaderboard';
+const rankingUrl = location.origin === 'https://berkelniels77-blip.github.io'
+  ? 'https://kattentuin-klassement.kattentuin-berkelniels77.workers.dev/api/leaderboard'
+  : './api/leaderboard';
 async function rankingRequest(options) {
   const response = await fetch(rankingUrl, {...options, signal:AbortSignal.timeout(6500)});
   if (!response.ok) throw Error('Klassement onbereikbaar');
@@ -536,3 +538,4 @@ try {
   byId('load-error').hidden = false;
   console.error(error);
 }
+

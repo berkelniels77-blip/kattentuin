@@ -1,6 +1,6 @@
 const scope = self.registration.scope;
 const prefix = 'kattentuin:' + scope + ':';
-const cacheName = prefix + 'v9';
+const cacheName = prefix + 'v10';
 const absolute = path => new URL(path, scope).href;
 const entry = absolute('./index.html');
 const assets = new Set([
@@ -36,5 +36,6 @@ self.addEventListener('fetch', event => {
     return await cache.match(key) ?? fetch(event.request);
   })());
 });
+
 
 
