@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f7f1e9">
+  <meta name="description" content="Een kattenpuzzel met 200 levels.">
+  <title>Kattentuin</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/cat.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-180.png">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div id="celebration" aria-hidden="true"></div>
+  <dialog id="update" aria-labelledby="update-title">
+    <h2 id="update-title">Nieuwe versie klaar</h2>
+    <p>Je kunt meteen verder spelen met de nieuwste versie.</p>
+    <button id="update-apply" class="big orange" type="button" autofocus>Bijwerken</button>
+  </dialog>
+  <aside id="storage" class="notice" hidden>Je browser kan je voortgang niet bewaren.</aside>
+  <main class="shell">
+    <section id="home" class="home" aria-labelledby="brand">
+      <header class="home-bar">
+        <button id="ranking-open" class="round trophy" aria-label="Klassement"><img src="./assets/trophy-fill.svg" alt=""></button>
+        <div class="score-pill"><img src="./assets/star-fill.svg" alt=""><strong id="home-score" aria-label="Score">0</strong></div>
+        <button id="home-help" class="round" aria-label="Instellingen en spelregels"><img src="./assets/gear-fill.svg" alt=""></button>
+      </header>
+      <div class="cover">
+        <h1 id="brand">Katten<span>tuin</span></h1>
+        <img class="mascot" src="./assets/mascot.webp" alt="">
+      </div>
+      <div class="home-actions">
+        <button id="play" class="big orange" disabled>Laden…</button>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Donkere modus</button>
+        <button id="shop-open" class="shop-open"><img src="./assets/coin.svg" alt=""><span id="home-coins">0</span> <span>Katjeswinkel</span></button>
+      </div>
+      <p id="load-error" role="alert" hidden>De puzzels konden niet worden geladen. Vernieuw de pagina om het opnieuw te proberen.</p>
+    </section>
+    <section id="game" class="game" aria-labelledby="game-title" hidden>
+      <header class="game-bar">
+        <button id="back" class="round" aria-label="Terug naar menu"><img src="./assets/arrow-left.svg" alt=""></button>
+        <div class="stat" id="game-title">Level <strong id="level-number"></strong></div>
+        <div class="stat">Score <strong id="game-score">0</strong></div>
+        <button id="game-help" class="round" aria-label="Instellingen en spelregels"><img src="./assets/gear-fill.svg" alt=""></button>
+      </header>
+      <div id="lives" class="lives" role="img" aria-label="3 van 3 levens">
+        <img src="./assets/fish.png" alt=""><img src="./assets/fish.png" alt=""><img src="./assets/fish.png" alt="">
+      </div>
+      <ul class="rule-strip" aria-label="Spelregels">
+        <li><img src="./assets/palette-fill.svg" alt="">1 kat per kleur</li>
+        <li><img src="./assets/grid-3x3-gap-fill.svg" alt="">1 kat per rij en kolom</li>
+        <li><img src="./assets/arrows-angle-expand.svg" alt="">Katten raken elkaar niet</li>
+      </ul>
+      <div class="puzzle">
+        <div id="region-strip" class="region-strip" aria-hidden="true"></div>
+        <div id="board" class="board" role="group" aria-label="Puzzelbord"></div>
+      </div>
+      <p id="feedback" class="feedback" role="status"></p>
+      <div class="game-actions">
+        <button id="next" class="big orange" hidden>Volgend level</button>
+        <button id="retry" class="big violet" hidden>Opnieuw proberen</button>
+        <button id="done" class="big violet" hidden>Naar het menu</button>
+      </div>
+    </section>
+  </main>
+  <dialog id="shop-dialog" aria-labelledby="shop-title">
+    <header><h2 id="shop-title">Katjeswinkel</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <div class="shop-wallet"><img src="./assets/coin.svg" alt=""><strong id="shop-coins">0</strong><span>muntjes</span></div>
+    <p class="shop-intro">Bij je eerste overwinning krijg je 12 muntjes zonder fouten, 10 met één fout en 8 met twee fouten.</p>
+    <div id="shop-items" class="shop-items"></div>
+    <p id="shop-status" role="status"></p>
+  </dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <header><h2 id="help-title">Zo speel je</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <ul>
+      <li>Tik of sleep voor kruisjes. Begin op een kruisje om tijdens het slepen te wissen.</li>
+      <li>Tik twee keer snel op hetzelfde vakje om een kat te plaatsen. Als het vakje fout is, verlies je een visje.</li>
+      <li>Plaats één kat per rij, kolom en kleur. Katten mogen elkaar ook diagonaal niet raken.</li>
+      <li>Met een toetsenbord gebruik je de pijltjes, Spatie voor een kruisje en Enter voor een kat.</li>
+    </ul>
+    <button id="restart" class="big violet" hidden>Level opnieuw beginnen</button>
+    <details>
+      <summary>Op je beginscherm zetten</summary>
+      <p>Op iPhone in Safari kies je <strong>Deel → Zet op beginscherm</strong> en zet je <strong>Open als webapp</strong> aan als die optie verschijnt. In Chrome op Android kies je <strong>⋮ → Toevoegen aan startscherm → Installeren</strong>.</p>
+      <p>Na de eerste online laadbeurt kun je offline spelen. Je voortgang blijft op dit apparaat bewaard.</p>
+      <button id="install" class="big violet" hidden>Installeer Kattentuin</button>
+    </details>
+  </dialog>
+  <dialog id="ranking-dialog" aria-labelledby="ranking-title">
+    <header><h2 id="ranking-title">Klassement</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <p id="ranking-status" role="status"></p>
+    <ol id="ranking-list" class="ranking-list"></ol>
+    <form id="ranking-form" hidden>
+      <label for="nickname">Jouw bijnaam</label>
+      <div class="nickname-row">
+        <input id="nickname" maxlength="24" required autocomplete="nickname">
+        <button type="submit">Meedoen</button>
+      </div>
+      <p>Je beste score per level telt mee. Als je meedoet, verschijnen je bijnaam en totaalscore in het klassement.</p>
+    </form>
+  </dialog>
+</body>
+</html>
