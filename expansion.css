@@ -1,0 +1,50 @@
+.home-bar { grid-template-columns: 48px minmax(65px, 1fr) 46px 46px; gap: 7px; }
+.theme-icon { font-size: 1.5rem; font-weight: 850; }
+.home-actions #capy-open { border-color:#d8d5ff; box-shadow:0 5px 0 #9e99d1; }
+.news-link { min-height:44px; border-radius:20px; background:transparent; font-weight:700; text-decoration:underline; }
+.sound-settings { border:1px solid #ad967666; border-radius:12px; margin:0 0 16px; padding:8px 12px; }
+.sound-settings label { display:flex; align-items:center; gap:8px; min-height:44px; }
+.sound-settings input { width:20px; height:20px; accent-color:#815b91; }
+.news-dialog { padding:0; }
+.news-hero { padding:25px 20px; background:#e8d9f4; color:#492e50; }
+.news-hero span { font-size:.72rem; letter-spacing:.14em; font-weight:900; }
+.news-hero h2 { margin:6px 0; }
+.patch-list { display:grid; gap:9px; list-style:none; padding:14px 16px; margin:0; }
+.patch-list li { border-radius:14px; padding:10px 12px; background:var(--soft); font-size:.88rem; }
+.patch-list strong { display:block; }
+.news-dialog form { padding:0 16px 16px; }
+.skin-card button { min-height:48px; }
+.skin-card button:disabled { opacity:.7; }
+.cell .wrong-cross { filter:brightness(0) saturate(100%) invert(17%) sepia(92%) saturate(4350%) hue-rotate(352deg) brightness(89%) contrast(117%); }
+.speed-award { margin:10px auto 0; width:max-content; max-width:100%; border-radius:30px; padding:8px 14px; background:#fce2a0; color:#583837; font-weight:800; animation:title-in .65s cubic-bezier(.2,.8,.25,1.2) both; }
+.ranking-list .player-meta { display:block; color:inherit; opacity:.8; font-size:.78rem; }
+.capy-top,.capy-store-head { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:12px; }
+.capy-top { flex-wrap:wrap; }
+.capy-top span { font-weight:720; }
+.capy-button { min-height:44px; border-radius:13px; padding:7px 10px; background:var(--soft); font-size:.8rem; font-weight:780; }
+.capy-button[aria-pressed="true"],.capy-products button:not(:disabled) { background:#e2d5f4; color:#452f51; }
+.capy-setup { display:grid; gap:9px; }
+.capy-welcome { padding:16px; border-radius:16px; background:#e9d9f0; color:#4d3354; font-size:1.15rem; font-weight:850; }
+.capy-setup label { display:grid; grid-template-columns:1fr 1.5fr; align-items:center; gap:8px; }
+.capy-setup input,.capy-setup select { min-width:0; min-height:44px; padding:7px; border:1px solid #8e7b8a; border-radius:10px; font:inherit; font-size:16px; }
+.capy-scene { position:relative; display:grid; justify-items:center; border-radius:19px; overflow:hidden; padding:10px 6px 0; color:#493244; background:linear-gradient(#e9d8ef 73%,#d5b2c9 73%); }
+.capy-scene[data-room="kitchen"] { background:linear-gradient(#fbe2bc 73%,#ddba94 73%); }
+.capy-scene[data-room="bath"] { background:linear-gradient(#d8edf0 73%,#a9d5dd 73%); }
+.capy-scene[data-room="bedroom"] { background:linear-gradient(#dcd8f6 73%,#b5addb 73%); }
+.capy-scene h3 { margin:0; font-size:.86rem; }
+.capy-pet { width:min(70%,235px); aspect-ratio:220/160; background:none; padding:0; z-index:1; animation:capy-idle 3.8s ease-in-out infinite; }
+.capy-pet svg { display:block; width:100%; }
+.capy-pet.reacting { animation:capy-react .6s ease-out both; }
+#capy-decor { position:absolute; left:7%; bottom:12%; font-size:1.4rem; max-width:25%; }
+.capy-message { padding:7px 0; min-height:36px; text-align:center; font-size:.85rem; }
+.capy-needs,.capy-products { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.capy-needs label,.capy-products article { padding:8px 10px; border-radius:13px; background:var(--soft); font-size:.81rem; }
+.capy-needs meter { display:block; width:100%; height:13px; }
+.capy-actions,.capy-rooms { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:10px; }
+.capy-actions button { background:#f7dba9; color:#4b302c; }
+.capy-products article { display:grid; gap:4px; }
+.capy-products small { min-height:1.4em; }
+#capy-shop-status { font-size:.85rem; padding-bottom:8px; }
+@keyframes capy-idle { 50% { transform:translateY(-3px) scaleY(1.035); } }
+@keyframes capy-react { 35% { transform:translateY(-11px) rotate(-4deg); } 70% { transform:translateY(2px) rotate(2deg); } }
+.shop-capy { width:100%; margin-bottom:12px; }

@@ -1,9 +1,11 @@
+import { initCapybara } from './capy.js';
+import { initFeedback } from './effects.js';
 import { maxLives, replay, runScore } from './game.js';
 
 const byId = id => document.getElementById(id);
 const board = byId('board');
-const colors = ['#eabd49','#eb91ba','#67b9d9','#a78ada','#8ec66f','#48a9a4','#f4a877','#b1c6da','#ad7958','#f5b8ce'];
-const colorNames = ['geel','roze','blauw','paars','groen','turkoois','oranje','grijsblauw','bruin','lichtroze'];
+const colors = ['#eabd49','#eb91ba','#67b9d9','#a78ada','#8ec66f','#48a9a4','#f4a877','#b1c6da','#ad7958','#f5b8ce','#91a88a','#d6c0ec'];
+const colorNames = ['geel','roze','blauw','paars','groen','turkoois','oranje','grijsblauw','bruin','lichtroze','saliegroen','lichtlila'];
 const scoreText = value => value.toLocaleString('nl-NL');
 const prefix = 'kattentuin.v1.' + new URL('./', import.meta.url).pathname + '.';
 let lastTap = null;
@@ -14,6 +16,26 @@ let best = new Map();
 let profile;
 let flash;
 let awardedCoins = 0;
+let elapsedMs = 0;
+let clockStarted = null;
+let speedBonus = 0;
+let lastWallet;
+let walletSync;
+
+function pauseClock() {
+  if (clockStarted === null) return;
+  elapsedMs += performance.now() - clockStarted;
+  clockStarted = null;
+}
+function playedTime() {
+  return Math.round(elapsedMs + (clockStarted === null ? 0 : performance.now() - clockStarted));
+}
+function nextLevel() {
+  return levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed);
+}
+function transact(change) {
+  return navigator.locks ? navigator.locks.request(prefix + 'shop', change) : change();
+}
 
 
 function bounce(element, cat) {
@@ -50,8 +72,8 @@ function read(key, fallback) {
   catch { return fallback; }
 }
 function write(key, value) {
-  try { localStorage.setItem(prefix + key, JSON.stringify(value)); }
-  catch { byId('storage').hidden = false; }
+  try { localStorage.setItem(prefix + key, JSON.stringify(value)); return true; }
+  catch { byId('storage').hidden = false; return false; }
 }
 function image(file) {
   const img = document.createElement('img');
@@ -68,19 +90,25 @@ function clearTaps() {
   lastTap = null;
 }
 function showHome(moveFocus = true) {
+  pauseClock();
   clearTaps();
+  if (level && !byId('game').hidden) saveRun();
   byId('game').hidden = true;
   byId('home').hidden = false;
-  const next = levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed);
+  const next = nextLevel();
   const play = byId('play');
   play.textContent = next ? 'Speel level ' + next.id : 'Alle katten thuis!';
   play.disabled = !next;
   play.onclick = () => { if (next) openLevel(next); };
   byId('home-score').textContent = scoreText(score());
+  const bonus = levels.reduce((total, item) => total + (read('level.' + item.id, {}).speedBonus || 0), 0);
+  byId('home-speed').hidden = !bonus;
+  byId('home-speed').textContent = '⚡ ' + scoreText(bonus) + ' snelheidspunten';
   refreshWallet();
   if (moveFocus) play.focus();
 }
 function openLevel(next, reset = false) {
+  pauseClock();
   clearTaps();
   clearTimeout(flash);
   byId('celebration').replaceChildren();
@@ -88,6 +116,9 @@ function openLevel(next, reset = false) {
   level = next;
   awardedCoins = 0;
   const saved = reset ? {} : read('level.' + level.id, {});
+  elapsedMs = saved.elapsedMs || 0;
+  speedBonus = 0;
+  byId('speed-award').hidden = true;
   const size = level.n ** 2;
   marks = Array.isArray(saved.marks) && saved.marks.length === size
     ? saved.marks.map(mark => mark === 2 ? 2 : 0)
@@ -104,7 +135,7 @@ function openLevel(next, reset = false) {
     cell.type = 'button';
     cell.style.setProperty('--delay', ((Math.floor(index / next.n) + index % next.n) * 22) + 'ms');
     cell.tabIndex = index ? -1 : 0;
-    cell.style.setProperty('--tile', colors[Number(region)]);
+    cell.style.setProperty('--tile', colors[parseInt(region, 36)]);
     cell.dataset.index = index;
     cell.onclick = event => { if (event.detail === 0) cross(index); };
     cell.onkeydown = event => keyCell(event, index);
@@ -122,6 +153,8 @@ function openLevel(next, reset = false) {
   write('active', level.id);
   if (reset) saveRun();
   render();
+  const state = replay(level, attempts);
+  if (!state.won && state.lives && !document.hidden) clockStarted = performance.now();
   byId('back').focus();
 }
 function saveRun() {
@@ -131,6 +164,7 @@ function saveRun() {
   const reward = won && !alreadyCompleted ? 6 + 2 * lives : 0;
   write('level.' + level.id, {
     marks, attempts, completed: alreadyCompleted || won,
+    elapsedMs: playedTime(), speedBonus: previous.speedBonus ?? (speedBonus || undefined),
     coinReward: previous.coinReward ?? (alreadyCompleted ? 10 : reward || undefined)
   });
   return reward;
@@ -222,7 +256,20 @@ function endStroke(event) {
 board.onpointerup = endStroke;
 board.onpointercancel = endStroke;
 board.onlostpointercapture = endStroke;
-window.addEventListener('pagehide', () => { if (level) saveRun(); });
+window.addEventListener('pagehide', () => {
+  pauseClock();
+  if (level && !byId('game').hidden) saveRun();
+});
+document.addEventListener('visibilitychange', () => {
+  if (!level || byId('game').hidden) return;
+  if (document.hidden) {
+    pauseClock();
+    saveRun();
+  } else {
+    const state = replay(level, attempts);
+    if (!state.won && state.lives && clockStarted === null) clockStarted = performance.now();
+  }
+});
 function canPlay(index) {
   const state = replay(level, attempts);
   return !state.won && state.lives > 0 && marks[index] !== 1;
@@ -239,7 +286,14 @@ function placeCat(index) {
   attempts.push(index);
   const state = replay(level, attempts);
   const hit = state.cats.has(index);
-  if (hit) marks[index] = 1;
+  marks[index] = hit ? 1 : 2;
+  feedback(hit ? 'cat' : 'miss');
+  if (state.won || !state.lives) pauseClock();
+  if (state.won && !best.has(level.id) && !read('level.' + level.id, {}).completed) {
+    const seconds = playedTime() / 1000;
+    if (seconds <= level.n * 7) speedBonus = 30;
+    else if (seconds <= level.n * 12) speedBonus = 15;
+  }
   awardedCoins = saveRun();
   if (state.won) {
     const points = runScore(level, attempts);
@@ -257,7 +311,18 @@ function placeCat(index) {
       [{transform:'translateX(0)'},{transform:'translateX(-7px)'},{transform:'translateX(6px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],
       {duration:330});
   }
-  if (state.won) { refreshWallet(); celebrate(); }
+  if (state.won) {
+    refreshWallet();
+    celebrate();
+    feedback('win');
+    if (awardedCoins) setTimeout(() => feedback('coin'), 330);
+    if (speedBonus) {
+      const award = byId('speed-award');
+      award.textContent = '⚡ Snelheidsbonus +' + speedBonus + ' punten!';
+      award.hidden = false;
+      setTimeout(() => feedback('speed'), 600);
+    }
+  }
   if (!hit) {
     clearTimeout(flash);
     board.querySelector('.miss')?.classList.remove('miss');
@@ -269,16 +334,17 @@ function placeCat(index) {
 function renderCell(index) {
   const mark = marks[index];
   const cell = cells[index];
-  const signature = mark + ':' + (mark === 1 ? selectedSkin() : '');
+  const wrong = mark === 2 && attempts.includes(index) && !level.solution.includes(index);
+  const signature = mark + ':' + (mark === 1 ? selectedSkin() : wrong ? 'wrong' : '');
   if (cell.dataset.mark === signature) return;
   cell.dataset.mark = signature;
-  const description = ['leeg','kat','kruisje'][mark];
-  const color = colorNames[Number(level.regions[index])];
+  const description = wrong ? 'rood kruisje' : ['leeg','kat','kruisje'][mark];
+  const color = colorNames[parseInt(level.regions[index], 36)];
   cell.setAttribute('aria-label', `Rij ${Math.floor(index / level.n) + 1}, kolom ${index % level.n + 1}, ${color}, ${description}`);
   if (mark === 0) cell.replaceChildren();
   else {
     const icon = image(mark === 1 ? 'skin-' + selectedSkin() + '.svg' : 'cross.svg');
-    if (mark === 2) icon.className = 'cross';
+    if (mark === 2) icon.className = wrong ? 'cross wrong-cross' : 'cross';
     cell.replaceChildren(icon);
   }
 }
@@ -286,7 +352,7 @@ function render(message = '') {
   const {lives, won, cats} = replay(level, attempts);
   for (const [index] of cells.entries()) renderCell(index);
   for (const icon of regionIcons) icon.classList.remove('placed');
-  for (const index of cats) regionIcons[Number(level.regions[index])].classList.add('placed');
+  for (const index of cats) regionIcons[parseInt(level.regions[index], 36)].classList.add('placed');
   byId('lives').setAttribute('aria-label', lives + ' van ' + maxLives + ' levens');
   for (const [index, icon] of [...byId('lives').children].entries()) icon.classList.toggle('spent', index >= lives);
   byId('game-score').textContent = scoreText(score());
@@ -299,12 +365,21 @@ function render(message = '') {
 }
 
 byId('back').onclick = byId('done').onclick = () => showHome();
-byId('next').onclick = () => { if (replay(level, attempts).won) { const next = levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed); if (next) openLevel(next); else showHome(); } };
+byId('next').onclick = () => { if (replay(level, attempts).won) { const next = nextLevel(); if (next) openLevel(next); else showHome(); } };
 byId('retry').onclick = () => openLevel(level, true);
 function showHelp() {
   byId('restart').hidden = byId('game').hidden;
+  if (!byId('game').hidden) {
+    pauseClock();
+    saveRun();
+  }
   byId('help-dialog').showModal();
 }
+byId('help-dialog').addEventListener('close', () => {
+  if (byId('game').hidden || document.hidden || clockStarted !== null) return;
+  const state = replay(level, attempts);
+  if (!state.won && state.lives) clockStarted = performance.now();
+});
 byId('home-help').onclick = byId('game-help').onclick = showHelp;
 byId('restart').onclick = () => {
   byId('help-dialog').close();
@@ -336,16 +411,22 @@ function coins(wardrobe = inventory()) {
     if (!saved.completed && !best.has(item.id)) return total;
     return total + (saved.coinReward ?? 10);
   }, 0);
-  return earned - Object.values(wardrobe.paid).reduce((sum, amount) => sum + amount, 0);
+  return earned - Object.values(wardrobe.paid).reduce((sum, amount) => sum + amount, 0) - (read('capybara', null)?.spent || 0);
 }
 function refreshWallet() {
   const amount = coins();
+  if (profile && lastWallet !== undefined && lastWallet !== amount) {
+    clearTimeout(walletSync);
+    walletSync = setTimeout(() => syncRanking().catch(() => {}), 600);
+  }
+  lastWallet = amount;
   byId('home-coins').textContent = amount;
   byId('shop-coins').textContent = amount;
 }
 function renderShop() {
   refreshWallet();
   const wardrobe = inventory();
+  const balance = coins(wardrobe);
   byId('shop-items').replaceChildren(...skins.map(skin => {
     const card = document.createElement('article');
     card.className = 'skin-card';
@@ -358,7 +439,7 @@ function renderShop() {
     const owned = wardrobe.owned.includes(skin.id);
     const active = wardrobe.selected === skin.id;
     button.textContent = active ? 'Gekozen' : owned ? 'Gebruik' : skin.price + ' muntjes';
-    button.disabled = active || (!owned && coins(wardrobe) < skin.price);
+    button.disabled = active || (!owned && balance < skin.price);
     button.onclick = () => chooseSkin(skin);
     card.classList.toggle('selected', active);
     card.append(portrait, title, description, button);
@@ -378,19 +459,20 @@ async function chooseSkin(skin) {
     try {
       localStorage.setItem(prefix + 'wardrobe', JSON.stringify(wardrobe));
       byId('shop-status').textContent = skin.name + ' is gekozen.';
+      if (!owned) feedback('coin');
     } catch {
       byId('shop-status').textContent = 'Opslaan lukte niet. Probeer het nog eens.';
     }
     renderShop();
     if (level) cells.forEach((_, index) => renderCell(index));
   };
-  if (navigator.locks) await navigator.locks.request(prefix + 'shop', change);
-  else change();
+  await transact(change);
 }
 function applyTheme(dark) {
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   document.querySelector('meta[name="theme-color"]').content = dark ? '#231d27' : '#f7f1e9';
   byId('theme-toggle').setAttribute('aria-pressed', dark);
+  byId('theme-toggle').textContent = dark ? '☀' : '☾';
 }
 applyTheme(read('dark-mode', false));
 byId('theme-toggle').onclick = () => {
@@ -411,6 +493,12 @@ window.addEventListener('storage', event => {
   if (level) cells.forEach((_, index) => renderCell(index));
 });
 
+const feedback = initFeedback(read, write);
+initCapybara({read, write, coins, refreshWallet, transact, feedback});
+const news = byId('news-dialog');
+byId('news-open').onclick = () => news.showModal();
+news.addEventListener('close', () => write('seen-news-002', true));
+
 const rankingUrl = location.origin === 'https://berkelniels77-blip.github.io'
   ? 'https://kattentuin-klassement.kattentuin-berkelniels77.workers.dev/api/leaderboard'
   : './api/leaderboard';
@@ -423,7 +511,7 @@ function syncRanking(player = profile) {
   return rankingRequest({
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({...player, runs: [...best].map(([id, run]) => ({id, attempts:run.attempts}))})
+    body: JSON.stringify({...player, currentLevel:nextLevel()?.id ?? levels.length, coins:Math.max(0, coins()), runs: [...best].map(([id, run]) => ({id, attempts:run.attempts}))})
   });
 }
 function renderRanking({players}, message) {
@@ -431,7 +519,11 @@ function renderRanking({players}, message) {
     const li = document.createElement('li');
     const points = document.createElement('strong');
     points.textContent = scoreText(player.score);
-    li.append(points, player.name);
+    const details = document.createElement('small');
+    details.className = 'player-meta';
+    details.textContent = 'Level ' + player.currentLevel + ' · ' +
+      (player.coins == null ? 'saldo volgt na synchronisatie' : scoreText(player.coins) + ' muntjes');
+    li.append(points, player.name, details);
     return li;
   }));
   byId('ranking-status').textContent = message || (players.length ? '' : 'Er staan nog geen scores.');
@@ -533,6 +625,7 @@ try {
   profile = read('ranking', null);
   byId('play').disabled = false;
   showHome(false);
+  if (!read('seen-news-002', false)) news.showModal();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));
 } catch (error) {
   byId('load-error').hidden = false;

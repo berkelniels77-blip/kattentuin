@@ -4,12 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f7f1e9">
-  <meta name="description" content="Een kattenpuzzel met 200 levels.">
+  <meta name="description" content="Een kattenpuzzel met 600 levels.">
   <title>Kattentuin</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./assets/cat.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./expansion.css">
   <script type="module" src="./app.js"></script>
 </head>
 <body>
@@ -25,6 +26,7 @@
       <header class="home-bar">
         <button id="ranking-open" class="round trophy" aria-label="Klassement"><img src="./assets/trophy-fill.svg" alt=""></button>
         <div class="score-pill"><img src="./assets/star-fill.svg" alt=""><strong id="home-score" aria-label="Score">0</strong></div>
+        <button id="theme-toggle" class="round theme-icon" type="button" aria-label="Donkere modus" aria-pressed="false">☾</button>
         <button id="home-help" class="round" aria-label="Instellingen en spelregels"><img src="./assets/gear-fill.svg" alt=""></button>
       </header>
       <div class="cover">
@@ -33,9 +35,11 @@
       </div>
       <div class="home-actions">
         <button id="play" class="big orange" disabled>Laden…</button>
-        <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">Donkere modus</button>
+        <button id="capy-open" class="big violet" type="button">🛖 Capibarahuis</button>
+        <button id="news-open" class="news-link" type="button">Wat is er nieuw?</button>
         <button id="shop-open" class="shop-open"><img src="./assets/coin.svg" alt=""><span id="home-coins">0</span> <span>Katjeswinkel</span></button>
       </div>
+      <p id="home-speed" class="speed-award" hidden></p>
       <p id="load-error" role="alert" hidden>De puzzels konden niet worden geladen. Vernieuw de pagina om het opnieuw te proberen.</p>
     </section>
     <section id="game" class="game" aria-labelledby="game-title" hidden>
@@ -57,6 +61,7 @@
         <div id="region-strip" class="region-strip" aria-hidden="true"></div>
         <div id="board" class="board" role="group" aria-label="Puzzelbord"></div>
       </div>
+      <p id="speed-award" class="speed-award" role="status" hidden></p>
       <p id="feedback" class="feedback" role="status"></p>
       <div class="game-actions">
         <button id="next" class="big orange" hidden>Volgend level</button>
@@ -65,10 +70,53 @@
       </div>
     </section>
   </main>
+  <dialog id="news-dialog" class="news-dialog" aria-labelledby="news-title">
+    <div class="news-hero"><span>VERSIE 0.02</span><h2 id="news-title">Katten Tuin – Update 0.02</h2><p>Meer puzzels. Een nieuw huisgenootje.</p></div>
+    <ul class="patch-list">
+      <li><strong>400 nieuwe puzzels</strong> Speel verder tot level 600. Elk bord heeft precies één oplossing.</li>
+      <li><strong>Sneller puzzelen</strong> Pak bonuspunten voor snelheid. Een foute kattenpoging laat een rood kruisje achter.</li>
+      <li><strong>Nieuwe spelinstellingen</strong> Zet geluid en trillingen apart aan of uit. Wissel het thema via het icoon bovenaan.</li>
+      <li><strong>Uitgebreid klassement</strong> Bekijk ook het level en de muntjes van elke speler.</li>
+      <li><strong>Een eigen capibara</strong> Geef haar een naam, richt vier kamers in en gebruik je gewone muntjes voor snacks, speelgoed en accessoires.</li>
+    </ul>
+    <form method="dialog"><button class="big orange">Verder spelen</button></form>
+  </dialog>
+  <dialog id="capy-dialog" aria-labelledby="capy-title">
+    <header><h2 id="capy-title">Het capibarahuis</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <div class="capy-top"><span>🪙 <strong id="capy-wallet">0</strong> muntjes</span>
+      <div id="capy-options" hidden><button id="capy-shop" class="capy-button">Winkel</button><button id="capy-edit" class="capy-button">Uiterlijk</button></div>
+    </div>
+    <form id="capy-setup" class="capy-setup">
+      <div class="capy-welcome">Een huisje voor jouw capibara</div>
+      <p>Kies een naam en geef je huisgenootje een eigen look.</p>
+      <label>Naam<input id="capy-name" required maxlength="20" placeholder="Bijvoorbeeld Nootje"></label>
+      <label>Vacht<select id="capy-color"><option value="honey">Honing</option><option value="cocoa">Cacao</option><option value="cream">Vanille</option><option value="rose">Roze</option></select></label>
+      <label>Patroon<select id="capy-pattern"><option value="plain">Effen</option><option value="spots">Vlekjes</option><option value="socks">Sokjes</option></select></label>
+      <label>Accessoire<select id="capy-accessory"><option value="">Geen</option></select></label>
+      <button class="big orange" type="submit">Opslaan</button>
+    </form>
+    <section id="capy-room" hidden>
+      <div id="capy-scene" class="capy-scene">
+        <h3 id="capy-room-name"></h3>
+        <div id="capy-decor" aria-hidden="true"></div>
+        <button id="capy-pet" class="capy-pet" type="button" aria-label="Aai je capibara"></button>
+      </div>
+      <p id="capy-message" class="capy-message" role="status"></p>
+      <div id="capy-needs" class="capy-needs"></div>
+      <div id="capy-actions" class="capy-actions"></div>
+      <nav id="capy-rooms" class="capy-rooms" aria-label="Kamers"></nav>
+    </section>
+    <section id="capy-store" hidden>
+      <div class="capy-store-head"><h3>Huiswinkeltje</h3><button id="capy-return" class="capy-button">Terug naar huis</button></div>
+      <p id="capy-shop-status" role="status"></p>
+      <div id="capy-products" class="capy-products"></div>
+    </section>
+  </dialog>
   <dialog id="shop-dialog" aria-labelledby="shop-title">
     <header><h2 id="shop-title">Katjeswinkel</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
     <div class="shop-wallet"><img src="./assets/coin.svg" alt=""><strong id="shop-coins">0</strong><span>muntjes</span></div>
     <p class="shop-intro">Bij je eerste overwinning krijg je 12 muntjes zonder fouten, 10 met één fout en 8 met twee fouten.</p>
+    <button id="shop-capy" class="capy-button shop-capy" type="button">🪴 Naar het huiswinkeltje</button>
     <div id="shop-items" class="shop-items"></div>
     <p id="shop-status" role="status"></p>
   </dialog>
@@ -80,6 +128,11 @@
       <li>Plaats één kat per rij, kolom en kleur. Katten mogen elkaar ook diagonaal niet raken.</li>
       <li>Met een toetsenbord gebruik je de pijltjes, Spatie voor een kruisje en Enter voor een kat.</li>
     </ul>
+    <fieldset class="sound-settings">
+      <legend>Geluid en trillingen</legend>
+      <label><input type="checkbox" id="sound-enabled"> Geluidseffecten</label>
+      <label><input type="checkbox" id="haptics-enabled"> Trillingen</label>
+    </fieldset>
     <button id="restart" class="big violet" hidden>Level opnieuw beginnen</button>
     <details>
       <summary>Op je beginscherm zetten</summary>
@@ -98,7 +151,7 @@
         <input id="nickname" maxlength="24" required autocomplete="nickname">
         <button type="submit">Meedoen</button>
       </div>
-      <p>Je beste score per level telt mee. Als je meedoet, verschijnen je bijnaam en totaalscore in het klassement.</p>
+      <p>Je beste score per level telt mee. Je deelt ook je huidige level en muntjessaldo.</p>
     </form>
   </dialog>
 </body>
