@@ -1,7 +1,7 @@
 const rooms = {
   living: {label:'Woonkamer', icon:'🛋️', actions:['pet','play']},
-  kitchen: {label:'Keuken', icon:'🥕', actions:['drink']},
-  bath: {label:'Badkamer', icon:'🫧', actions:['wash']},
+  kitchen: {label:'Keuken', icon:'🥕', actions:[]},
+  bath: {label:'Badkamer', icon:'🫧', actions:[]},
   bedroom: {label:'Slaapkamer', icon:'🌙', actions:['sleep']}
 };
 const needs = {
@@ -13,6 +13,8 @@ const needs = {
 const items = [
   {id:'berry', label:'Bessenmix', icon:'🫐', cost:8, type:'Eten', effect:'food', gain:38, room:'kitchen'},
   {id:'melon', label:'Watermeloen', icon:'🍉', cost:12, type:'Eten', effect:'food', gain:48, room:'kitchen'},
+  {id:'water', label:'Water', icon:'💧', cost:4, type:'Drinken', effect:'water', gain:27, room:'kitchen'},
+  {id:'soap', label:'Zeep', icon:'🧼', cost:5, type:'Verzorging', effect:'clean', gain:30, room:'bath'},
   {id:'juice', label:'Appelsap', icon:'🧃', cost:8, type:'Drinken', effect:'water', gain:36, room:'kitchen'},
   {id:'bubbles', label:'Bubbelschuim', icon:'🫧', cost:10, type:'Verzorging', effect:'clean', gain:46, room:'bath'},
   {id:'ball', label:'Strandbal', icon:'🏐', cost:35, type:'Speelgoed', room:'living'},
@@ -25,21 +27,23 @@ const items = [
   {id:'orange', label:'Mandarijntje', icon:'🍊', cost:32, type:'Accessoire'}
 ];
 const actions = {
-  drink:['💧','Drinken geven','water',27,'Slurp! Lekker fris.'],
-  wash:['🫧','Wassen','clean',30,'Helemaal schoon en zacht.'],
   pet:['♡','Aaien','joy',14,'Dat voelt fijn.'],
   play:['🏐','Spelen','joy',26,'Nog een keertje?'],
-  sleep:['🌙','Laten slapen','joy',12,'Welterusten!']
+  sleep:['🌙','Laten slapen','joy',0,'Welterusten!']
 };
 
+const carePause = {pet:5 * 60000, play:15 * 60000};
+const sleepDuration = 8 * 3600000;
+const sleeping = pet => Date.now() < (pet?.sleepUntil || 0);
+
 export function settlePet(pet, now = Date.now()) {
-  const elapsed = Math.max(0, now - pet.updated);
+  now = Math.max(now, pet.updated);
+  const elapsed = now - pet.updated;
   const asleep = Math.max(0, Math.min(now, pet.sleepUntil || 0) - pet.updated);
-  const awakeHours = (elapsed - asleep * .72) / 3600000;
+  const awakeHours = (elapsed - asleep) / 3600000;
   const next = {...pet, updated:now, needs:{...pet.needs}};
   for (const [key, need] of Object.entries(needs)) {
-    next.needs[key] = Math.max(18, Math.min(100, pet.needs[key] - awakeHours * need.rate +
-      (key === 'joy' ? asleep / 3600000 * 6 : 0)));
+    next.needs[key] = Math.max(18, Math.min(100, pet.needs[key] - awakeHours * need.rate));
   }
   return next;
 }
@@ -49,6 +53,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   const dialog = $('capy-dialog');
   const setup = $('capy-setup');
   const store = $('capy-store');
+  const sleepScreen = $('capy-sleep-screen');
+  let wakeTimer;
   let view = 'room';
   let reaction = '';
   let reactionTimer;
@@ -58,9 +64,37 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     reaction = '';
   });
   const get = () => read('capybara', null);
+  function updateSleep() {
+    clearTimeout(wakeTimer);
+    const pet = get();
+    if (!sleeping(pet)) {
+      if (sleepScreen.open) sleepScreen.close();
+      return;
+    }
+    $('capy-sleep-title').textContent = pet.name + ' slaapt';
+    const remaining = pet.sleepUntil - Date.now();
+    const minutes = Math.max(1, Math.ceil(remaining / 60000));
+    $('capy-sleep-time').textContent = minutes >= 60
+      ? Math.floor(minutes / 60) + ' uur en ' + (minutes % 60) + ' min'
+      : minutes + ' min';
+    if (!sleepScreen.open) sleepScreen.showModal();
+    wakeTimer = setTimeout(() => {
+      updateSleep();
+      if (dialog.open) render();
+    }, Math.min(remaining + 30, 60000));
+  }
+  sleepScreen.addEventListener('cancel', event => event.preventDefault());
+  $('capy-wake').onclick = () => transact(() => {
+    const saved = get();
+    if (!saved) return;
+    const pet = settlePet(saved);
+    pet.sleepUntil = 0;
+    if (save(pet)) react('Goedemorgen, slaapkop!');
+  });
   function save(pet) {
     if (write('capybara', pet) === false) return false;
     refreshWallet();
+    updateSleep();
     return true;
   }
   function react(message, sound = 'care') {
@@ -144,16 +178,26 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       return el;
     }));
     const stocked = items.filter(item => item.room === pet.room && item.effect && pet.stock[item.id]);
-    const controls = room.actions.map(id =>
-      button(actions[id][0] + ' ' + (id === 'sleep' && Date.now() < pet.sleepUntil ? 'Wakker maken' : actions[id][1]), () => care(id))
-    );
+    const controls = room.actions.map(id => {
+      const readyAt = (pet.lastCare?.[id] || 0) + (carePause[id] || 0);
+      const waiting = readyAt > Date.now();
+      const minutes = Math.ceil((readyAt - Date.now()) / 60000);
+      return button(actions[id][0] + ' ' + actions[id][1] + (waiting ? ' · ' + minutes + ' min' : ''), () => care(id), waiting);
+    });
     if (pet.room === 'kitchen' && !stocked.some(item => item.type === 'Eten')) {
       controls.unshift(button('🛒 Eten kopen', openShop));
     }
-    $('capy-pantry').hidden = pet.room !== 'kitchen';
+    const quantity = type => stocked.filter(item => item.type === type).reduce((sum, item) => sum + pet.stock[item.id], 0);
+    $('capy-pantry').hidden = !['kitchen','bath'].includes(pet.room);
     if (pet.room === 'kitchen') {
-      const meals = stocked.filter(item => item.type === 'Eten').reduce((total, item) => total + pet.stock[item.id], 0);
-      $('capy-pantry').textContent = meals ? 'Voorraad · ' + meals + (meals === 1 ? ' portie eten' : ' porties eten') : 'Voorraad · geen eten';
+      const meals = quantity('Eten');
+      const drinks = quantity('Drinken');
+      if (!drinks) controls.push(button('💧 Drinken kopen', openShop));
+      $('capy-pantry').textContent = 'Voorraad · ' + meals + ' eten · ' + drinks + ' drinken';
+    } else if (pet.room === 'bath') {
+      const soap = quantity('Verzorging');
+      if (!soap) controls.push(button('🧼 Zeep kopen', openShop));
+      $('capy-pantry').textContent = 'Voorraad · ' + soap + ' wasbeurten';
     }
     $('capy-actions').replaceChildren(...controls, ...stocked.map(item =>
       button(item.icon + ' ' + (item.type === 'Eten' ? 'Voer ' + item.label.toLowerCase() : item.label) + ' · ' + pet.stock[item.id],
@@ -163,7 +207,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   function mutate(change, message) {
     return transact(() => {
       const saved = get();
-      if (!saved) return;
+      if (!saved || sleeping(saved)) return;
       const pet = settlePet(saved);
       if (change(pet) === false) return;
       if (!save(pet)) return;
@@ -172,14 +216,21 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     });
   }
   function care(id) {
-    let message = actions[id][4];
     return mutate(pet => {
+      const now = Date.now();
+      if (id === 'sleep') {
+        pet.sleepUntil = now + sleepDuration;
+        return;
+      }
+      pet.lastCare ||= {};
+      if (now < (pet.lastCare[id] || 0) + carePause[id]) {
+        react('Straks weer, geef me even tijd.');
+        return false;
+      }
+      pet.lastCare[id] = now;
       const [, , need, gain] = actions[id];
-      const wasSleeping = Date.now() < pet.sleepUntil;
-      pet.sleepUntil = id === 'sleep' && !wasSleeping ? Date.now() + 45 * 60000 : 0;
-      if (id === 'sleep' && wasSleeping) message = 'Goedemorgen, slaapkop!';
-      else pet.needs[need] = Math.min(100, pet.needs[need] + gain + (id === 'play' && pet.stock.ball ? 8 : 0));
-    }, () => message);
+      pet.needs[need] = Math.min(100, pet.needs[need] + gain + (id === 'play' && pet.stock.ball ? 8 : 0));
+    }, actions[id][4]);
   }
   function use(item) {
     return mutate(pet => {
@@ -191,7 +242,9 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   }
   function buy(item) {
     return transact(() => {
-      const pet = settlePet(get());
+      const saved = get();
+      if (!saved || sleeping(saved)) return;
+      const pet = settlePet(saved);
       if (coins() < item.cost || (!item.effect && pet.stock[item.id])) return;
       pet.spent += item.cost;
       pet.stock[item.id] = (pet.stock[item.id] || 0) + 1;
@@ -222,6 +275,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     if (!name) { $('capy-name').focus(); return; }
     transact(() => {
       const old = get();
+      if (sleeping(old)) return;
       const pet = old ? settlePet(old) : {needs:{food:80, water:80, clean:85, joy:85}, stock:{}, spent:0,
         room:'living', updated:Date.now(), sleepUntil:0};
       Object.assign(pet, {name, color:$('capy-color').value, pattern:$('capy-pattern').value, accessory:$('capy-accessory').value});
@@ -250,6 +304,11 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   $('capy-shop').onclick = openShop;
   $('capy-return').onclick = () => { view = 'room'; render(); };
   $('capy-pet').onclick = () => care('pet');
-  window.addEventListener('storage', () => { if (dialog.open) render(); });
+  window.addEventListener('storage', () => {
+    updateSleep();
+    if (dialog.open) render();
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateSleep(); });
+  return updateSleep;
   setInterval(() => { if (dialog.open && view === 'room') render(); }, 60000);
 }

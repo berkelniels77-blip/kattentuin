@@ -1,6 +1,6 @@
 const scope = self.registration.scope;
 const prefix = 'kattentuin:' + scope + ':';
-const cacheName = prefix + 'v14';
+const cacheName = prefix + 'v15';
 const absolute = path => new URL(path, scope).href;
 const entry = absolute('./index.html');
 const assets = new Set([

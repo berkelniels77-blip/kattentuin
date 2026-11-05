@@ -317,3 +317,13 @@
 [data-theme="dark"] .capy-house .capy-needs label,
 [data-theme="dark"] .care-dock { color:#fbecd9; background:#483651; border-color:#63506d; }
 [data-theme="dark"] #capy-pantry { color:#e8c6de; }
+
+#capy-sleep-screen {
+  width:min(360px, calc(100% - 32px));
+  padding:25px 20px 20px;
+  text-align:center;
+}
+#capy-sleep-screen::backdrop { background:#231a36ec; }
+#capy-sleep-screen .sleep-moon { font-size:2.6rem; margin-bottom:9px; }
+#capy-sleep-screen p { margin:8px 0; }
+#capy-wake { margin:10px 0 0; }

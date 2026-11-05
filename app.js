@@ -497,7 +497,7 @@ window.addEventListener('storage', event => {
 });
 
 const feedback = initFeedback(read, write);
-initCapybara({read, write, coins, refreshWallet, transact, feedback});
+const updateSleep = initCapybara({read, write, coins, refreshWallet, transact, feedback});
 const news = byId('news-dialog');
 byId('news-open').onclick = () => news.showModal();
 news.addEventListener('close', () => write('seen-news-002', true));
@@ -629,6 +629,7 @@ try {
   byId('play').disabled = false;
   showHome(false);
   if (!read('seen-news-002', false)) news.showModal();
+  updateSleep();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));
 } catch (error) {
   byId('load-error').hidden = false;
