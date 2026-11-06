@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x2="0%" y2="100%">
+      <stop stop-color="#ffebaa"/><stop offset=".57" stop-color="#f3bd5d"/><stop offset="1" stop-color="#d78948"/>
+    </linearGradient>
+    <linearGradient id="violet" x2="0%" y2="100%">
+      <stop stop-color="#ebd0f5"/><stop offset="1" stop-color="#9e69ba"/>
+    </linearGradient>
+    <linearGradient id="bronze" x2="0%" y2="100%">
+      <stop stop-color="#b78662"/><stop offset="1" stop-color="#88583e"/>
+    </linearGradient>
+    <path id="star" d="M0-24 6-8l17 1-13 11 4 17L0 11l-15 10 4-17-13-11 17-1Z"/>
+    <symbol id="crown" viewBox="0 0 600 600">
+      <g transform="translate(237 70) rotate(-9)" stroke="#965e43" stroke-width="4.5" stroke-linejoin="round">
+        <path d="m4-27 27 21 25-39 23 37 28-21-7 54q-45 11-89 0Z" fill="url(#gold)"/>
+        <path d="M12 13q44 9 88-1l-1 13q-45 11-88 0Z" fill="#ec9e58"/>
+        <path d="m52-10 9 8-8 10-8-9Z" fill="#bb6b9c" stroke="#a16383" stroke-width="2"/>
+        <circle cx="56" cy="-44" r="5.5" fill="#ffdf8b"/><circle cx="4" cy="-28" r="4.7" fill="#ffdf8b"/><circle cx="107" cy="-30" r="4.7" fill="#ffdf8b"/>
+        <path d="m18 2 2 8m67-11-1 10" fill="none" stroke="#ffedb4" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+    </symbol>
+    <symbol id="bow" viewBox="0 0 600 600">
+      <g transform="translate(205 92) rotate(-20)" stroke="#85567c" stroke-width="4" stroke-linejoin="round">
+        <path d="M-6 2q-30-22-41-15-6 7-1 27 4 17 42-5m12-7q31-25 42-18 6 9 1 30-4 16-43-5" fill="url(#violet)"/>
+        <path d="M-10 7q-10 11-18 29l18-4 8 7L2 11m6-5q11 10 20 24l-15-1-5 9-6-27" fill="#b27abb"/>
+        <rect x="-8" y="-7" width="17" height="19" rx="7" fill="#deb2e7"/>
+        <path d="m-33 0 20 4m45-8L15 3" stroke="#efcef0" stroke-width="2.3" stroke-linecap="round"/>
+      </g>
+    </symbol>
+    <symbol id="orange" viewBox="0 0 600 600">
+      <g transform="translate(306 62) rotate(-12)" stroke="#a46a49" stroke-width="4">
+        <path d="M-39 8q0-32 37-33 40 1 40 32 0 20-38 22-38-1-39-21Z" fill="#ee9856"/>
+        <path d="M-23 0q6-11 19-12" stroke="#ffca81" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <path d="M-2-21q-6-19 2-22M0-26q10-20 29-14-7 14-29 14Z" fill="#a1b976" stroke="#6d895b"/>
+        <path d="M-29 20q28 5 57-2" fill="none" stroke="#c77352" stroke-width="2.4"/>
+      </g>
+    </symbol>
+    <symbol id="star-glasses" viewBox="0 0 600 600">
+      <g transform="translate(305 145) rotate(-18)" stroke="#80588c" stroke-width="3" stroke-linejoin="round">
+        <path d="M23-4q34-17 65-5" fill="none" stroke="#875f95" stroke-width="6"/>
+        <use href="#star" transform="scale(1.65)" fill="#927cc4" fill-opacity=".64"/>
+        <use href="#star" transform="translate(123 -3) scale(1.23 1.47)" fill="#927cc4" fill-opacity=".64"/>
+        <path d="m-17-3 14-10m108 10 11-9" stroke="#f3e7ff" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </symbol>
+    <g id="floret" stroke="#ae738c" stroke-width="2">
+      <path d="M0-5q-13-17-17-4-9 9 5 13-12 7-3 16 8 8 15-7 8 15 17 7 8-9-3-16 14-4 8-14-7-11-22 5Z" fill="#efb4c7"/>
+      <circle cy="4" r="6" fill="#ffe2a0"/>
+    </g>
+    <symbol id="flower-wreath" viewBox="0 0 600 600">
+      <path d="M211 95q74-51 151-29" fill="none" stroke="#72936f" stroke-width="8" stroke-linecap="round"/>
+      <path d="M222 90q-10-29-27-24 5 18 27 24Zm112-27q20-23 33-14-11 14-33 14Z" fill="#95ad79" stroke="#72936f" stroke-width="3"/>
+      <use href="#floret" x="242" y="76"/><use href="#floret" x="282" y="64" transform="rotate(-8 282 64)"/><use href="#floret" x="327" y="64"/>
+    </symbol>
+    <symbol id="eikelhoed" viewBox="0 0 600 600">
+      <g transform="translate(254 64) rotate(-12)" stroke="#81583f" stroke-width="4.5">
+        <path d="M38-27q-1-20 12-24" fill="none" stroke-linecap="round"/>
+        <path d="M-9 11Q-8-31 37-33 81-35 85 11q-46 20-94 0Z" fill="url(#bronze)"/>
+        <path d="M-8 9q44 9 93-1l-2 12q-46 12-89 0Z" fill="#af7d5c"/>
+        <path d="m8-9 7 4 8-6 8 5 10-6 9 4 9-4 9 4m-55-12 8 3 9-6 9 4 8-4 9 4" stroke="#d3a179" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      </g>
+    </symbol>
+    <symbol id="esdoornstrik" viewBox="0 0 600 600">
+      <g transform="translate(208 87) rotate(-20)" stroke="#a36852" stroke-width="3" stroke-linejoin="round">
+        <path d="m-3 7-31 20 5-18-14-5 11-9-9-15 18 1 7-16 14 21 12-11 2 16 13 5-11 8 4 12Z" fill="#e7a269"/>
+        <path d="m-19 25 15-19-9-13m9 13 13-6" fill="none" stroke="#b47757" stroke-width="2"/>
+        <circle cx="-3" cy="7" r="7" fill="#f5d184"/>
+      </g>
+    </symbol>
+    <symbol id="oogstkroon" viewBox="0 0 600 600">
+      <g transform="translate(224 90) rotate(-11)" stroke="#ae844e" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0 3q66-22 133 4m-106-8-11-37m48 35-2-52m31 54 16-42" fill="none" stroke="#ad8951" stroke-width="6"/>
+        <path d="m18-28-14-11 12 0 7-10 5 13Zm44-11-13-12 13 2 6-16 7 14-4 12Zm44 4-4-16 9 5 10-8-1 15Z" fill="#f5d485"/>
+        <path d="M5 4q62-14 123 5l-3 9Q61 2 4 15Z" fill="url(#gold)"/>
+      </g>
+    </symbol>
+    <symbol id="sterrenhaarspeld" viewBox="0 0 600 600">
+      <g transform="translate(206 90) rotate(-17)" stroke="#a38168" stroke-width="3" stroke-linejoin="round">
+        <path d="M-27 12h58" stroke="#8d7ca7" stroke-width="7" stroke-linecap="round"/>
+        <use href="#star" transform="translate(-9 -3) scale(.8)" fill="#ffe497"/>
+        <use href="#star" transform="translate(18 6) scale(.5)" fill="#e5c9ee"/>
+      </g>
+    </symbol>
+    <symbol id="planeetbril" viewBox="0 0 600 600">
+      <g transform="translate(301 145) rotate(-18)" stroke="#775b9c" stroke-width="5">
+        <path d="M28-6q35-14 68-6" fill="none"/>
+        <circle r="32" fill="#ae9fda" fill-opacity=".58"/>
+        <ellipse cx="123" cy="-2" rx="23" ry="28" fill="#a0b8e3" fill-opacity=".65"/>
+        <path d="M-30 10q37 5 53-25m79 16q25 6 46-20" fill="none" stroke="#f7d48c" stroke-width="4" stroke-linecap="round"/>
+      </g>
+    </symbol>
+    <symbol id="noorderlichtkroon" viewBox="0 0 600 600">
+      <g transform="translate(232 76) rotate(-10)" stroke="#7e739c" stroke-width="4" stroke-linejoin="round">
+        <path d="m7 4 21-46 13 25 24-43 19 44 29-22-4 57q-48 9-97-1Z" fill="#9fcfc3"/>
+        <path d="M8 3q49 7 101-5v19q-47 9-97-1Z" fill="url(#violet)"/>
+        <use href="#star" transform="translate(65 -25) scale(.45)" fill="#fff0af" stroke="#b29270" stroke-width="4"/>
+        <path d="M21 5q22 7 68-1" fill="none" stroke="#eee2f4" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
