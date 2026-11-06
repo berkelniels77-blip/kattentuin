@@ -1,3 +1,5 @@
+import {dutchDay,nextMidnight} from './economy.mjs';
+
 export const wheelCats = [
   {id:'aurora', name:'Aurora'},
   {id:'saffier', name:'Saffier'}
@@ -14,16 +16,18 @@ const prizes = [
 ];
 export const spinDelay = 4 * 3600000;
 
-function calendarDay(date = new Date()) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
+function remainingTime(state,now=Date.now()) {
+  const day=dutchDay(now);
+  const previous=state.spinDay ?? (state.nextSpin ? dutchDay(state.nextSpin-spinDelay) : -Infinity);
+  return previous>=day ? nextMidnight(now)-now : 0;
 }
-export function dailyVisit(state, day = calendarDay()) {
+export function dailyVisit(state, day = dutchDay(Date.now())) {
   if (day <= (state.visitDay ?? -Infinity)) return state;
   const streak = day === state.visitDay + 1 ? (state.streak || 0) + 1 : 1;
   return {...state, visitDay:day, streak};
 }
 export function drawPrize(state, now = Date.now(), random = crypto) {
-  if (now < (state.nextSpin || 0)) return null;
+  if (remainingTime(state,now)) return null;
   const sample = new Uint32Array(1);
   const ceiling = Math.floor(2 ** 32 / 100) * 100;
   do { random.getRandomValues(sample); } while (sample[0] >= ceiling);
@@ -37,7 +41,7 @@ export function drawPrize(state, now = Date.now(), random = crypto) {
       if (prize.cat && !duplicate) cats.push(prize.cat);
       if (prize.accessory && !duplicate) accessories.push(prize.accessory);
       const coins = duplicate ? 65 : prize.coins || 0;
-      return {...state, nextSpin:now + spinDelay, coins:(state.coins || 0) + coins, cats, accessories,
+      return {...state, spinDay:dutchDay(now),nextSpin:nextMidnight(now), coins:(state.coins || 0) + coins, cats, accessories,
         last:{label:duplicate ? 'Dubbel gewonnen · 65 muntjes' : prize.label, angle:(start + prize.weight / 2) * 3.6}};
     }
     start += prize.weight;
@@ -79,7 +83,7 @@ export function initWheel({read, write, transact, refreshWallet, chooseSkin, sel
     const state = saved();
     const days = state.streak || 0;
     $('wheel-streak').textContent = days + (days === 1 ? ' dag op rij' : ' dagen op rij');
-    const remaining = Math.max(0, (state.nextSpin || 0) - Date.now());
+    const remaining = remainingTime(state);
     const minutes = Math.ceil(remaining / 60000);
     $('wheel-spin').disabled = spinning || !!remaining;
     $('wheel-spin').textContent = spinning ? 'Het rad draait…' : remaining
@@ -141,7 +145,7 @@ export function initWheel({read, write, transact, refreshWallet, chooseSkin, sel
   setInterval(() => {
     if (dialog.open) {
       // Keep focus on the same control while the countdown updates.
-      const minutes = Math.ceil(Math.max(0, (saved().nextSpin || 0) - Date.now()) / 60000);
+      const minutes = Math.ceil(remainingTime(saved()) / 60000);
       if (!spinning) {
         $('wheel-spin').disabled = !!minutes;
         $('wheel-spin').textContent = minutes ? 'Volgende draai over ' + Math.floor(minutes / 60) + 'u ' + (minutes % 60) + 'm' : 'Draai aan het rad';

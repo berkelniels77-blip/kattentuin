@@ -1,3 +1,4 @@
+import {initCapyPresentation} from './capy-house.mjs';
 const rooms = {
   living: {label:'Woonkamer', icon:'🛋️', actions:['pet','play']},
   kitchen: {label:'Keuken', icon:'🥕', actions:[]},
@@ -50,7 +51,7 @@ export function settlePet(pet, now = Date.now()) {
   return next;
 }
 
-export function initCapybara({read, write, coins, refreshWallet, transact, feedback}) {
+export function initCapybara({read, write, coins, refreshWallet, transact, feedback, rewards}) {
   const $ = id => document.getElementById(id);
   const dialog = $('capy-dialog');
   const setup = $('capy-setup');
@@ -60,14 +61,18 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
   let view = 'room';
   let reaction = '';
   let reactionTimer;
-  const roomProps = {living:'🛋️', kitchen:'🧺', bath:'🛁', bedroom:'🛏️'};
   dialog.addEventListener('close', () => {
     clearTimeout(reactionTimer);
     reaction = '';
   });
-  const get = () => read('capybara', null);
-  const availableAccessories = pet => items.filter(item => item.type === 'Accessoire' &&
-    (item.wheel ? read('wheel', {}).accessories?.includes(item.id) : pet?.stock[item.id]));
+  const get = () => {
+    const pet=read('capybara',null);
+    return rewards.withStock(pet);
+  };
+  const allItems = () => [...items,...rewards.items()];
+  const house=initCapyPresentation($,allItems);
+  const availableAccessories = pet => allItems().filter(item => item.type === 'Accessoire' &&
+    (item.wheel ? (read('wheel', {}).accessories?.includes(item.id) || rewards.hasItem(item.id)) : item.passExclusive || pet?.stock[item.id]));
   function updateSleep() {
     clearTimeout(wakeTimer);
     const pet = get();
@@ -93,7 +98,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     if (!saved) return;
     const pet = settlePet(saved);
     pet.sleepUntil = 0;
-    if (save(pet)) react('Goedemorgen, slaapkop!');
+    if (save(pet)) react('Goedemorgen, slaapkop!', 'care', 'wake');
   });
   function save(pet) {
     if (write('capybara', pet) === false) return false;
@@ -101,12 +106,13 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     updateSleep();
     return true;
   }
-  function react(message, sound = 'care') {
+  function react(message, sound = 'care', kind) {
     reaction = message;
     feedback(sound);
+    if (sound === 'care') rewards.care();
     render();
     $('capy-message').textContent = message;
-    $('capy-pet').classList.add('reacting');
+    house.react(kind);
     clearTimeout(reactionTimer);
     reactionTimer = setTimeout(() => { reaction = ''; render(); }, 2300);
   }
@@ -123,7 +129,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     const portrait = $('capy-pet');
     portrait.dataset.coat = pet.color;
     portrait.dataset.pattern = pet.pattern;
-    $('capy-accessory-model').textContent = items.find(item => item.id === pet.accessory)?.icon ?? '';
+    house.portrait(pet);
     $('capy-sleep-model').hidden = !(Date.now() < pet.sleepUntil);
   }
   function render() {
@@ -138,44 +144,19 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     $('capy-title').textContent = pet?.name || 'Het capibarahuis';
     if (!pet) return;
     if (view === 'shop') {
-      const balance = coins();
-      $('capy-products').replaceChildren(...items.filter(item => !item.wheel).map(item => {
-        const owned = (pet.stock[item.id] || 0) > 0;
-        const el = document.createElement('article');
-        const label = document.createElement('strong');
-        label.textContent = item.icon + ' ' + item.label;
-        const detail = document.createElement('small');
-        detail.textContent = item.type + (item.effect && owned ? ' · ' + pet.stock[item.id] + ' in voorraad' : '');
-        el.append(label, detail, button(!item.effect && owned ? 'In bezit' : item.cost + ' muntjes',
-          () => buy(item), (!item.effect && owned) || balance < item.cost));
-        return el;
-      }));
+      house.shop(items.filter(item=>!item.wheel),pet.stock,coins(),buy);
       return;
     }
     if (view !== 'room') return;
     const room = rooms[pet.room];
     $('capy-scene').dataset.room = pet.room;
-    $('capy-room-name').textContent = room.icon + ' ' + room.label;
-    $('capy-furniture').textContent = roomProps[pet.room];
-    $('capy-decor').textContent = items.filter(item => item.room === pet.room && !item.effect && pet.stock[item.id])
-      .map(item => item.icon).join(' ');
+    $('capy-room-name').textContent = room.label;
+    house.room(pet.room,allItems().filter(item => item.room === pet.room && !item.effect && pet.stock[item.id]));
     portrait(pet);
-    $('capy-pet').classList.toggle('reacting', !!reaction);
     $('capy-message').textContent = reaction || (Date.now() < pet.sleepUntil ? 'Even lekker slapen…' :
       pet.needs.food < 35 ? 'Tijd voor een hapje.' : pet.needs.water < 35 ? 'Een slokje zou fijn zijn.' :
       pet.needs.clean < 35 ? 'Zullen we in bad?' : pet.needs.joy < 35 ? 'Zullen we samen spelen?' : 'Gezellig dat je er bent!');
-    $('capy-needs').replaceChildren(...Object.entries(needs).map(([key, need]) => {
-      const label = document.createElement('label');
-      label.append(need.icon + ' ' + need.label);
-      const bar = document.createElement('meter');
-      bar.min = 0;
-      bar.max = 100;
-      bar.low = 35;
-      bar.optimum = 85;
-      bar.value = Math.round(pet.needs[key]);
-      label.append(bar);
-      return label;
-    }));
+    house.stats(pet,needs);
     $('capy-rooms').replaceChildren(...Object.entries(rooms).map(([id, info]) => {
       const el = button(info.icon + ' ' + info.label, () => mutate(pet => { pet.room = id; }));
       el.setAttribute('aria-pressed', pet.room === id);
@@ -189,18 +170,18 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       return button(actions[id][0] + ' ' + actions[id][1] + (waiting ? ' · ' + minutes + ' min' : ''), () => care(id), waiting);
     });
     if (pet.room === 'kitchen' && !stocked.some(item => item.type === 'Eten')) {
-      controls.unshift(button('🛒 Eten kopen', openShop));
+      controls.unshift(button('🛒 Eten kopen', () => openShop('food')));
     }
     const quantity = type => stocked.filter(item => item.type === type).reduce((sum, item) => sum + pet.stock[item.id], 0);
     $('capy-pantry').hidden = !['kitchen','bath'].includes(pet.room);
     if (pet.room === 'kitchen') {
       const meals = quantity('Eten');
       const drinks = quantity('Drinken');
-      if (!drinks) controls.push(button('💧 Drinken kopen', openShop));
+      if (!drinks) controls.push(button('💧 Drinken kopen', () => openShop('drinks')));
       $('capy-pantry').textContent = 'Voorraad · ' + meals + ' eten · ' + drinks + ' drinken';
     } else if (pet.room === 'bath') {
       const soap = quantity('Verzorging');
-      if (!soap) controls.push(button('🧼 Zeep kopen', openShop));
+      if (!soap) controls.push(button('🧼 Zeep kopen', () => openShop('care')));
       $('capy-pantry').textContent = 'Voorraad · ' + soap + ' wasbeurten';
     }
     $('capy-actions').replaceChildren(...controls, ...stocked.map(item =>
@@ -208,14 +189,14 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
         () => use(item))));
 
   }
-  function mutate(change, message) {
+  function mutate(change, message, kind) {
     return transact(() => {
       const saved = get();
       if (!saved || sleeping(saved)) return;
       const pet = settlePet(saved);
       if (change(pet) === false) return;
       if (!save(pet)) return;
-      if (message) react(typeof message === 'function' ? message() : message);
+      if (message) react(typeof message === 'function' ? message() : message, 'care', kind);
       else render();
     });
   }
@@ -233,8 +214,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       }
       pet.lastCare[id] = now;
       const [, , need, gain] = actions[id];
-      pet.needs[need] = Math.min(100, pet.needs[need] + gain + (id === 'play' && pet.stock.ball ? 8 : 0));
-    }, actions[id][4]);
+      pet.needs[need] = Math.min(100, pet.needs[need] + gain + (id === 'play' && allItems().some(item => item.type === 'Speelgoed' && item.room === 'living' && pet.stock[item.id]) ? 8 : 0));
+    }, actions[id][4], id);
   }
   function use(item) {
     return mutate(pet => {
@@ -242,7 +223,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       pet.stock[item.id]--;
       pet.sleepUntil = 0;
       pet.needs[item.effect] = Math.min(100, pet.needs[item.effect] + item.gain);
-    }, item.label + ' gebruikt!');
+    }, item.label + ' gebruikt!', item.effect);
   }
   function buy(item) {
     return transact(() => {
@@ -256,7 +237,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       pet.needs.joy = Math.min(100, pet.needs.joy + 5);
       if (save(pet)) {
         feedback('coin');
-        $('capy-shop-status').textContent = item.icon + ' ' + pet.name + ' is blij met ' + item.label + '!';
+        $('capy-shop-status').textContent = pet.name + ' is blij met ' + item.label + '!';
+        house.purchase(item);
         render();
       }
     });
@@ -271,6 +253,7 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     accessory.replaceChildren(new Option('Geen', ''), ...availableAccessories(pet)
       .map(item => new Option(item.label, item.id)));
     accessory.value = pet?.accessory || '';
+    house.updatePreview();
     render();
   }
   setup.onsubmit = event => {
@@ -285,11 +268,12 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
       Object.assign(pet, {name, color:$('capy-color').value, pattern:$('capy-pattern').value, accessory:availableAccessories(pet).some(item => item.id === $('capy-accessory').value) ? $('capy-accessory').value : ''});
       if (!save(pet)) return;
       view = 'room';
-      react(old ? 'Een frisse nieuwe look!' : 'Welkom thuis, ' + name + '!');
+      react(old ? 'Een frisse nieuwe look!' : 'Welkom thuis, ' + name + '!', 'care', 'outfit');
     });
   };
   function openCapy(firstView) {
     view = firstView;
+    if (view==='shop') house.shopCategory();
     if (!get()) edit();
     dialog.showModal();
     render();
@@ -300,7 +284,8 @@ export function initCapybara({read, write, coins, refreshWallet, transact, feedb
     openCapy('shop');
   };
   $('capy-edit').onclick = edit;
-  function openShop() {
+  function openShop(category) {
+    house.shopCategory(category);
     view = 'shop';
     $('capy-shop-status').textContent = '';
     render();

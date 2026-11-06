@@ -1,12 +1,15 @@
 const scope = self.registration.scope;
 const prefix = 'kattentuin:' + scope + ':';
-const cacheName = prefix + 'v17';
+const cacheName = prefix + 'v19-004';
 const absolute = path => new URL(path, scope).href;
 const entry = absolute('./index.html');
 const assets = new Set([
   './index.html', './style.css', './expansion.css', './capy.js', './wheel.js', './skin-aurora.svg', './skin-saffier.svg', './capy-portrait.webp', './effects.js', './app.js', './game.js', './levels.json', './manifest.webmanifest',
   './assets/cat.svg', './assets/cross.svg', './assets/coin.svg', './assets/skin-miso.svg', './assets/skin-pixel.svg', './assets/skin-mochi.svg', './assets/skin-luna.svg', './assets/skin-nova.svg', './assets/skin-parel.svg', './assets/skin-mint.svg', './assets/skin-kaneel.svg', './assets/mascot.webp', './assets/fish.png', './assets/trophy-fill.svg', './assets/star-fill.svg', './assets/gear-fill.svg', './assets/arrow-left.svg', './assets/palette-fill.svg', './assets/grid-3x3-gap-fill.svg', './assets/arrows-angle-expand.svg', './assets/x-lg.svg', './assets/icon-180.png',
-  './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png'
+  './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png',
+  './release.css','./capy-house.css','./weekly.mjs','./capy-house.mjs','./economy.mjs','./pass-items.mjs',
+  './pass-track.mjs','./worlds.mjs','./world-ui.mjs','./solver.mjs','./world-catalog.json','./themes.json',
+  './assets/mascot-home.webp','./assets/capy-rooms.svg','./assets/capy-accessories.svg','./assets/skin-pompoenpoot.svg'
 ].map(absolute));
 
 self.addEventListener('install', event => {

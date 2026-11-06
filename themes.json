@@ -1,0 +1,42 @@
+{
+  "themes": [
+    {
+      "start": "2026-11-02",
+      "name": "Herfsttuin",
+      "description": "Verzamel beloningen tussen de herfstblaadjes.",
+      "note": "Gratis testpass. XP telt per Nederlandse week.",
+      "colors": {"accent":"#a94d43","background":"#f8dfc1","end":"#f2b3ac"},
+      "image":"mascot.webp",
+      "tiers":[
+        {"id":"leaves","xp":25,"label":"Blaadjeszak","reward":{"coins":15}},
+        {"id":"bow","xp":65,"label":"Lavendelstrik","reward":{"item":"bow"}},
+        {"id":"harvest","xp":110,"label":"Herfstoogst","reward":{"coins":45}},
+        {"id":"star","xp":170,"label":"Herfstster","reward":{"item":"autumn-star"}}
+      ],
+      "quests":[
+        {"id":"puzzle2","event":"puzzle","target":2,"xp":35,"label":"Los 2 puzzels op"},
+        {"id":"care3","event":"care","target":3,"xp":25,"label":"Verzorg je capibara 3 keer"},
+        {"id":"daily2","event":"daily","target":2,"xp":30,"label":"Claim op 2 dagen een beloning"}
+      ]
+    },
+    {
+      "start": "2026-11-09",
+      "name": "Sterrennacht",
+      "description": "Laat de tuin oplichten met maanlicht en sterren.",
+      "note": "Dit thema is vooraf gepland.",
+      "colors": {"accent":"#5d4689","background":"#e4ddff","end":"#bcb4ee"},
+      "image":"capy-portrait.webp",
+      "tiers":[
+        {"id":"moon","xp":20,"label":"Maanschat","reward":{"coins":18}},
+        {"id":"crown","xp":55,"label":"Kroontje","reward":{"item":"crown"}},
+        {"id":"night","xp":100,"label":"Sterrenmuntjes","reward":{"coins":52}},
+        {"id":"badge","xp":160,"label":"Maaninsigne","reward":{"item":"moon-badge"}}
+      ],
+      "quests":[
+        {"id":"wheel2","event":"spin","target":2,"xp":30,"label":"Draai 2 dagen aan het rad"},
+        {"id":"puzzle3","event":"puzzle","target":3,"xp":45,"label":"Los 3 puzzels op"},
+        {"id":"care2","event":"care","target":2,"xp":20,"label":"Verzorg je capibara 2 keer"}
+      ]
+    }
+  ]
+}

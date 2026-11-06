@@ -6,12 +6,15 @@
   <meta name="theme-color" content="#f7f1e9">
   <meta name="description" content="Een kattenpuzzel met 600 levels.">
   <title>Kattentuin</title>
-  <link rel="manifest" href="./manifest.webmanifest">
+
   <link rel="icon" href="./assets/cat.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./assets/icon-180.png">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./expansion.css">
   <script type="module" src="./app.js"></script>
+<link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./release.css">
+<link rel="stylesheet" href="./capy-house.css">
 </head>
 <body>
   <div id="celebration" aria-hidden="true"></div>
@@ -31,12 +34,14 @@
       </header>
       <div class="cover">
         <h1 id="brand">Katten<span>tuin</span></h1>
-        <img class="mascot" src="./assets/mascot.webp" alt="">
+        <img class="mascot" src="./assets/mascot-home.webp" alt="">
       </div>
       <div class="home-actions">
         <button id="play" class="big orange" disabled>Laden…</button>
+        <button id="world-open" class="big violet" type="button" disabled>Wereldreis</button>
         <button id="capy-open" class="big violet" type="button">🛖 Capibarahuis</button>
         <div class="home-links">
+          <button id="pass-open" class="news-link" type="button" aria-haspopup="dialog">🎁 Game Pass</button>
           <button id="wheel-open" class="news-link" type="button">🎡 Prijzenrad</button>
           <button id="news-open" class="news-link" type="button">Wat is er nieuw?</button>
         </div>
@@ -52,6 +57,7 @@
         <div class="stat">Score <strong id="game-score">0</strong></div>
         <button id="game-help" class="round" aria-label="Instellingen en spelregels"><img src="./assets/gear-fill.svg" alt=""></button>
       </header>
+      <p id="world-badge" hidden></p>
       <div id="lives" class="lives" role="img" aria-label="3 van 3 levens">
         <img src="./assets/fish.png" alt=""><img src="./assets/fish.png" alt=""><img src="./assets/fish.png" alt="">
       </div>
@@ -64,6 +70,11 @@
         <div id="region-strip" class="region-strip" aria-hidden="true"></div>
         <div id="board" class="board" role="group" aria-label="Puzzelbord"></div>
       </div>
+      <section id="puzzle-rules" hidden></section>
+      <div id="puzzle-speed" hidden>
+        <span id="puzzle-speed-label"></span>
+        <progress id="puzzle-speed-progress" aria-label="Resterende tijd voor speedbonus"></progress>
+      </div>
       <p id="speed-award" class="speed-award" role="status" hidden></p>
       <p id="feedback" class="feedback" role="status"></p>
       <div class="game-actions">
@@ -74,19 +85,26 @@
     </section>
   </main>
   <dialog id="news-dialog" class="news-dialog" aria-labelledby="news-title">
-    <div class="news-hero"><span>VERSIE 0.03</span><h2 id="news-title">Katten Tuin – Update 0.03</h2><p>Dit is er nieuw sinds 0.02.</p></div>
+    <div class="news-hero"><span>VERSIE 0.04</span><h2 id="news-title">Katten Tuin – Update 0.04</h2><p>Dit is er nieuw sinds 0.03.</p></div>
     <ul class="patch-list">
-      <li><strong>Dagelijkse streak en prijzenrad</strong> Bij je eerste bezoek van de dag zie je je reeks. Draai elke vier uur. Je hebt 86% kans op muntjes.</li>
-      <li><strong>Exclusieve radprijzen</strong> Win de kattenskins Aurora en Saffier of een Sterrenbril en Bloemenkrans voor je capibara. Een dubbele prijs levert 65 muntjes op.</li>
-      <li><strong>Een nieuw capibarahuis</strong> Een schermvullend huis met een getekende capibara, duidelijkere kamers en een zichtbare voorraad.</li>
-      <li><strong>Verzorging en slaap</strong> Eten, drinken en wassen verbruiken gekochte porties. Aaien en spelen hebben een wachttijd. Tijdens het slapen blijven de behoeften gelijk en pauzeert het hele spel tot je capibara wakker is.</li>
-      <li><strong>Soepeler op je telefoon</strong> Een compacter puzzelscherm, een tikgeluid bij kruisjes en lichte haptische feedback op ondersteunde telefoons.</li>
+      <li><strong>Wereldreis</strong> Ontdek 600 puzzels in 12 werelden met eigen kleuren en vormen. De logische moeilijkheid loopt door bij elke wereldgrens. Later verschijnen nieuwe aanwijzingen en expertborden met twee katten per rij, kolom en kleur.</li>
+      <li><strong>Wekelijkse Game Pass</strong> Verdien XP met Meowdoku en speel 40 mijlpalen vrij. Je passlevel blijft in beeld. Elke maandag begint een nieuwe week op Nederlandse tijd.</li>
+      <li><strong>Exclusieve prijzen</strong> Verzamel capybara-items die bij het weekthema passen. Pompoenpoot is de eindskin van Herfsttuin.</li>
+      <li><strong>Dagelijkse tuin</strong> Claim een dagbeloning, bouw je streak op en draai elke Nederlandse dag één keer gratis aan het prijzenrad.</li>
+      <li><strong>Capibarahuis en winkel</strong> Vier getekende kamers, nieuwe verzorgingsanimaties en accessoires die echt op je capibara passen. De winkel toont categorieën, prijzen, voorraad en hoeveel muntjes je eventueel tekortkomt.</li>
+      <li><strong>Speedbonus en startscherm</strong> Een aflopende balk toont hoeveel snelheidspunten nog haalbaar zijn. De gewone muntbeloning blijft gelden. De kat op het startscherm heeft twee zichtbare voorpootjes.</li>
+      <li><strong>Je voortgang reist mee</strong> Je bestaande borden, scores, muntjes, capibara en aankopen blijven bewaard.</li>
     </ul>
     <form method="dialog"><button class="big orange">Verder spelen</button></form>
   </dialog>
   <dialog id="wheel-dialog" aria-labelledby="wheel-title">
     <header><div><p id="wheel-streak" class="wheel-streak"></p><h2 id="wheel-title">Dagelijks prijzenrad</h2></div>
       <form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <section class="daily-reward" aria-label="Dagbeloning">
+      <ol id="daily-calendar" aria-label="Afgelopen zeven dagen"></ol>
+      <p id="daily-info" role="status"></p>
+      <button id="daily-claim" type="button" class="big violet">Claim dagbeloning</button>
+    </section>
     <div class="wheel-stage" aria-hidden="true"><div id="wheel-disk"></div><span class="wheel-pointer"></span><span class="wheel-hub">✦</span></div>
     <p id="wheel-result" class="wheel-result" role="status"></p>
     <button id="wheel-spin" class="big orange" type="button">Draai aan het rad</button>
@@ -109,6 +127,11 @@
     <form id="capy-setup" class="capy-setup">
       <div class="capy-welcome">Een huisje voor jouw capibara</div>
       <p>Kies een naam en geef je huisgenootje een eigen look.</p>
+      <div class="capy-preview-stage" aria-hidden="true"><span id="capy-preview" class="capy-avatar">
+        <img class="capy-portrait" src="./capy-portrait.webp" alt="">
+        <span class="capy-markings"></span>
+        <span id="capy-preview-accessory" class="capy-worn"></span>
+      </span></div>
       <label>Naam<input id="capy-name" required maxlength="20" placeholder="Bijvoorbeeld Nootje"></label>
       <label>Vacht<select id="capy-color"><option value="honey">Honing</option><option value="cocoa">Cacao</option><option value="cream">Vanille</option><option value="rose">Roze</option></select></label>
       <label>Patroon<select id="capy-pattern"><option value="plain">Effen</option><option value="spots">Vlekjes</option><option value="socks">Sokjes</option></select></label>
@@ -118,16 +141,23 @@
     <section id="capy-room" hidden>
       <div id="capy-needs" class="capy-needs"></div>
       <div id="capy-scene" class="capy-scene">
-        <div class="house-window" aria-hidden="true"></div>
+        <div class="capy-sunlight" aria-hidden="true"></div>
         <div id="capy-furniture" aria-hidden="true"></div>
         <h3 id="capy-room-name"></h3>
         <div id="capy-decor" aria-hidden="true"></div>
         <button id="capy-pet" class="capy-pet" type="button" aria-label="Aai je capibara">
-          <img class="capy-portrait" src="./capy-portrait.webp" alt="">
-          <span class="capy-markings" aria-hidden="true"></span>
-          <span id="capy-accessory-model" aria-hidden="true"></span>
-          <span id="capy-sleep-model" aria-hidden="true" hidden>z Z</span>
+          <span id="capy-avatar" class="capy-avatar">
+            <img class="capy-portrait" src="./capy-portrait.webp" alt="">
+            <span class="capy-markings" aria-hidden="true"></span>
+            <svg class="capy-blink" viewBox="0 0 600 600" aria-hidden="true">
+              <path d="M276 153q9-31 31-29 17 3 17 27-23 21-48 2Zm138-61q7-8 17 4l11 13q-17 4-28-17Z"/>
+              <path d="M282 151q14 8 28-3m109-46 11 5" fill="none" stroke="#946142" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <span id="capy-accessory-model" class="capy-worn" aria-hidden="true"></span>
+            <span id="capy-sleep-model" aria-hidden="true" hidden><i>z</i><i>Z</i><i>Z</i></span>
+          </span>
         </button>
+        <div id="capy-fx" aria-hidden="true"></div>
         <p id="capy-message" class="capy-message" role="status"></p>
       </div>
       <div class="care-dock"><p id="capy-pantry" hidden></p><div id="capy-actions" class="capy-actions"></div></div>
@@ -136,6 +166,7 @@
     <section id="capy-store" hidden>
       <div class="capy-store-head"><h3>Huiswinkeltje</h3><button id="capy-return" class="capy-button">Terug naar huis</button></div>
       <p id="capy-shop-status" role="status"></p>
+      <nav id="capy-shop-filters" aria-label="Winkelcategorieën"></nav>
       <div id="capy-products" class="capy-products"></div>
     </section>
     </div>
@@ -149,7 +180,7 @@
     <p id="shop-status" role="status"></p>
   </dialog>
   <dialog id="help-dialog" aria-labelledby="help-title">
-    <header><h2 id="help-title">Zo speel je</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <header><h2 id="help-title">Instellingen</h2><form method="dialog"><button class="round close" aria-label="Sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
     <ul>
       <li>Tik of sleep voor kruisjes. Begin op een kruisje om tijdens het slepen te wissen.</li>
       <li>Tik twee keer snel op hetzelfde vakje om een kat te plaatsen. Als het vakje fout is, verlies je een visje.</li>
@@ -181,6 +212,27 @@
       </div>
       <p>Je beste score per level telt mee. Je deelt ook je huidige level en muntjessaldo.</p>
     </form>
+  </dialog>
+  <dialog id="pass-dialog" aria-labelledby="pass-dialog-title">
+    <header><h2 id="pass-dialog-title">Wekelijkse Game Pass</h2><form method="dialog"><button class="round close" aria-label="Game Pass sluiten"><img src="./assets/x-lg.svg" alt=""></button></form></header>
+    <section id="pass">
+      <label class="week-select">Bekijk week <select id="week-picker"></select></label>
+        <article id="pass-hero" class="card pass-hero">
+          <div><p class="eyebrow" id="pass-dates"></p><h2 id="theme-name"></h2><p id="theme-description"></p><p id="theme-note"></p><button id="pass-finale">Bekijk level 40</button></div>
+          <img id="theme-image" alt="">
+        </article>
+        <article class="pass-track-card">
+          <div id="pass-unlock" role="status" aria-live="polite" hidden></div>
+          <div class="puzzle-meta"><h2>Beloningsspoor</h2><strong id="pass-xp"></strong></div>
+          <div class="pass-meter"><progress id="pass-progress" aria-label="Game Pass XP"></progress><span id="pass-cleared"></span></div>
+          <button id="pass-earn-xp" class="pass-xp-link">Speel een gewone puzzel voor XP</button>
+          <ol id="tiers" class="pass-track" aria-label="40 passlevels"></ol>
+          <div class="pass-navigation"><button id="pass-current">Naar mijn level</button><span>Veeg door het spoor</span></div>
+          <div class="pass-selection"><div><strong id="stage-title"></strong><p id="stage-info"></p></div></div>
+        </article>
+        <article class="card"><h2>Weekopdrachten</h2><div id="quests"></div></article>
+
+    </section>
   </dialog>
 </body>
 </html>
