@@ -233,14 +233,33 @@ dialog > .pass-hud { position:sticky; top:0; z-index:5; }
   100% { opacity:0; transform:translate(var(--x),var(--y)) rotate(145deg); }
 }
 
-/* The normal campaign lives in a changing landscape, without a second mode. */
+/* The campaign landscape stays behind the board, including on short phones. */
 :root { background:var(--world-sky,#f7f1e9); }
 body::before { content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
- background:radial-gradient(ellipse 100% 32% at -10% 105%,var(--world-front) 0 98%,transparent 100%),radial-gradient(ellipse 100% 30% at 110% 100%,var(--world-hill) 0 98%,transparent 100%),linear-gradient(160deg,#ffffff99,transparent 65%); }
-body::after { content:var(--world-motif); position:fixed; pointer-events:none; z-index:-1; right:6vw; top:18vh; font-size:clamp(80px,22vw,160px); color:var(--world-front); opacity:.18; transform:rotate(-12deg); }
-.world-caption { font-size:.78rem; font-weight:750; text-align:center; opacity:.85; margin:2px 0 8px; }
-[data-theme=dark] { background:color-mix(in srgb,var(--world-sky) 13%,#171522); }
-[data-theme=dark] body::before { opacity:.28; background:radial-gradient(ellipse 100% 32% at -10% 105%,var(--world-front) 0 98%,transparent 100%),radial-gradient(ellipse 100% 30% at 110% 100%,var(--world-hill) 0 98%,transparent 100%); }
+  background:var(--world-art,none) center / cover no-repeat; }
+[data-theme=dark] { background:color-mix(in srgb,var(--world-sky) 16%,#171522); }
+[data-theme=dark] body::before { background-image:linear-gradient(#171629ab,#181726b5),var(--world-art,none); }
+@media(min-width:720px) {
+  body::before { background-size: min(100vw, 920px) 100%; }
+}
+.world-caption,#world-badge { border-radius:99px; background:var(--white); color:var(--world-accent,#674e61);
+  font-size:.78rem; font-weight:800; text-align:center; padding:5px 12px; width:fit-content; }
+.world-caption { margin:2px auto 8px; }
+[data-world] #play { color:#342b26; background:color-mix(in srgb,var(--world-sky) 77%,var(--world-accent));
+  border-color:var(--world-accent); box-shadow:0 4px 0 var(--world-accent); }
+[data-world][data-theme=dark] #play { color:#fff; background:var(--world-accent);
+  border-color:color-mix(in srgb,var(--world-accent) 70%,white); box-shadow:0 4px 0 #15121a; }
+[data-theme=dark] .world-caption,[data-theme=dark] #world-badge { color:var(--ink); }
+.pass-claim { min-height:42px; padding:7px 12px; border-radius:12px; font-weight:800;
+  color:#3e2a13; background:#ffda82; border:1px solid #c18b42; }
+.pass-claim:disabled { opacity:.58; }
+#stage-claim { margin-top:7px; }
+.pass-tile.claim-ready button { outline:2px solid #d3922e; outline-offset:-2px; }
+.weekly-goal { align-items:center; }
+.weekly-goal .pass-claim { flex-shrink:0; }
+.quest-progress { display:block; opacity:.78; margin-top:2px; }
+.news-history { margin-block:10px; }
+.news-history summary { cursor:pointer; font-weight:800; padding-block:8px; }
 [data-theme=dark] .cell,[data-theme=dark] .region-strip span { background:color-mix(in srgb,var(--tile) 80%,#241f32); }
 .cell { outline:1px solid #ffffff25; outline-offset:-1px; }
 .puzzle-forbidden { box-shadow:inset 0 0 0 2px #a73545; }

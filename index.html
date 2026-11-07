@@ -85,7 +85,13 @@
     </section>
   </main>
   <dialog id="news-dialog" class="news-dialog" aria-labelledby="news-title">
-    <div class="news-hero"><span>VERSIE 0.04.1</span><h2 id="news-title">Katten Tuin – Update 0.04.1</h2><p>Eén avontuur, steeds een nieuwe wereld.</p></div>
+    <div class="news-hero"><span>VERSIE 0.04.2</span><h2 id="news-title">Katten Tuin – Update 0.04.2</h2><p>Twaalf werelden met elk een eigen gezicht.</p></div>
+    <ul class="patch-list">
+      <li><strong>Een eigen wereld om de 50 levels</strong> Elke wereld heeft een getekende achtergrond en een eigen kleurenpalet op het bord.</li>
+      <li><strong>Claim je Game Pass-beloningen</strong> Tik op een vrijgespeelde prijs om die op te halen. De XP van afgeronde weekopdrachten claim je bij de opdracht zelf. Eerder ontvangen prijzen blijven van jou.</li>
+      <li><strong>Terug naar level 238</strong> Was je al voorbij level 240? Dan speel je vanaf 238 opnieuw tot je oude plek. Je houdt je scores, muntjes en aankopen. Eerder verdiende levelbeloningen krijg je niet dubbel.</li>
+    </ul>
+    <details class="news-history"><summary>Patchnotes van 0.04.1</summary>
     <ul class="patch-list">
       <li><strong>Werelden in je normale levels</strong> Elke 50 levels verandert de omgeving. De aparte Wereldreis is verdwenen; je voortgang en verdiende muntjes blijven behouden.</li>
       <li><strong>Meer puzzelvariatie</strong> Nieuwe gebiedsvormen en wisselende pastel-, oceaan-, herfst-, candy- en natuurpaletten, in lichte en donkere modus.</li>
@@ -97,6 +103,7 @@
       <li><strong>Speedbonus en startscherm</strong> Een aflopende balk toont hoeveel snelheidspunten nog haalbaar zijn. De gewone muntbeloning blijft gelden. De kat op het startscherm heeft twee zichtbare voorpootjes.</li>
       <li><strong>Je voortgang reist mee</strong> Je bestaande borden, scores, muntjes, capibara en aankopen blijven bewaard.</li>
     </ul>
+    </details>
     <form method="dialog"><button class="big orange">Verder spelen</button></form>
   </dialog>
   <dialog id="wheel-dialog" aria-labelledby="wheel-title">
@@ -230,7 +237,7 @@
           <button id="pass-earn-xp" class="pass-xp-link">Speel een gewone puzzel voor XP</button>
           <ol id="tiers" class="pass-track" aria-label="40 passlevels"></ol>
           <div class="pass-navigation"><button id="pass-current">Naar mijn level</button><span>Veeg door het spoor</span></div>
-          <div class="pass-selection"><div><strong id="stage-title"></strong><p id="stage-info"></p></div></div>
+          <div class="pass-selection"><div><strong id="stage-title"></strong><p id="stage-info"></p><button id="stage-claim" class="pass-claim" type="button" hidden>Beloning claimen</button></div></div>
         </article>
         <article class="card"><h2>Weekopdrachten</h2><div id="quests"></div></article>
 

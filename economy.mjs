@@ -1,5 +1,3 @@
-import {unlockMilestones} from './pass-track.mjs';
-
 const formatter = new Intl.DateTimeFormat('en-CA', {timeZone:'Europe/Amsterdam',year:'numeric',month:'2-digit',day:'2-digit'});
 const dayMs = 86400000;
 export const itemLabels = {
@@ -72,7 +70,6 @@ export function visit(state,day) {
 export function grant(state,week,reward) {
   state.coins += reward.coins || 0;
   week.xp += reward.xp || 0;
-  if (reward.xp && Number.isFinite(state.latestWeek) && state.weeks[isoDay(state.latestWeek)]===week) unlockMilestones(state,week);
   if (reward.item) {
     state.itemGrants ||= {...state.items};
     state.items[reward.item] = (state.items[reward.item] || 0) + 1;
@@ -92,7 +89,6 @@ export function recordWeekPuzzle(state,config,day,id,xp) {
   if (Object.hasOwn(week.puzzleXp,id)) return null;
   week.puzzleXp[id]=xp;
   event(state,config,day,'puzzle',xp);
-  unlockMilestones(state,week);
   return xp;
 }
 export function dailyOffer(streak) {
@@ -144,6 +140,7 @@ export function claimQuest(week,id) {
   const quest = week?.theme.quests.find(item=>item.id===id);
   if (!quest || Object.hasOwn(week.questClaims,id) || (week.events[quest.event] || 0)<quest.target) return null;
   week.questClaims[id] = true;
+  week.xp += quest.xp;
   return quest;
 }
 export function recordPuzzle(state,config,day,id,lives,bonus,xp) {

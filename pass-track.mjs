@@ -21,36 +21,30 @@ export function trackSkin(week) {
 
 export const stageReward=(week,stage)=>week.track?.prizes?.[stage] || itemForStage(week,stage);
 
-export function unlockMilestones(state,week) {
-  const level=currentPassLevel(week);
-  const previous=week.track?.awardedThrough || 0;
-  if (previous>=level) return false;
+export function stagePrize(week,stage) {
+  return stage===stageCount ? {skin:trackSkin(week)} : {item:stageReward(week,stage)};
+}
+
+export function stageClaimStatus(state,week,stage) {
+  const {item,skin}=stagePrize(week,stage);
+  if (!item && !skin) return 'empty';
+  if (stage<=(week.track?.awardedThrough || 0) || week.track?.claimed?.[stage] ||
+      (item && state.passItems?.[item.id]) || (skin && state.passSkins?.[skin.id])) return 'claimed';
+  return stage<=currentPassLevel(week) ? 'ready' : 'locked';
+}
+
+export function claimMilestone(state,week,stage) {
+  if (stageClaimStatus(state,week,stage)!=='ready') return null;
+  const {item,skin}=stagePrize(week,stage);
   const track=week.track ||= {};
-  const receipt={stage:level};
-  for (let stage=previous+1;stage<=level;stage++) {
-    const item=stageReward(week,stage);
-    if (item) {
-      track.prizes ||= {};
-      track.prizes[stage]=item;
-      state.passItems ||= {};
-      if (!Object.hasOwn(state.passItems,item.id)) {
-        state.passItems[item.id]=item;
-        receipt.item=item;
-        receipt.rewardStage=stage;
-      }
-    }
-    const skin=stage===stageCount && trackSkin(week);
-    if (skin) {
-      state.passSkins ||= {};
-      if (!Object.hasOwn(state.passSkins,skin.id)) {
-        state.passSkins[skin.id]=skin;
-        receipt.skin=skin;
-        receipt.rewardStage=stage;
-      }
-      track.skin=state.passSkins[skin.id];
-    }
+  (track.claimed ||= {})[stage]=true;
+  if (item) {
+    (track.prizes ||= {})[stage]=item;
+    (state.passItems ||= {})[item.id]=item;
   }
-  track.awardedThrough=level;
-  if (level>1 || receipt.item) track.receipt=receipt;
-  return true;
+  if (skin) {
+    (state.passSkins ||= {})[skin.id]=skin;
+    track.skin=skin;
+  }
+  return {stage,item,skin};
 }

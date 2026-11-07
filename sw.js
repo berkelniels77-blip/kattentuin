@@ -1,6 +1,6 @@
 const scope = self.registration.scope;
 const prefix = 'kattentuin:' + scope + ':';
-const cacheName = prefix + 'v20-0041';
+const cacheName = prefix + 'v21-0042';
 const absolute = path => new URL(path, scope).href;
 const entry = absolute('./index.html');
 const assets = new Set([
@@ -9,6 +9,7 @@ const assets = new Set([
   './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png',
   './release.css','./capy-house.css','./weekly.mjs','./capy-house.mjs','./economy.mjs','./pass-items.mjs',
   './pass-track.mjs','./worlds.mjs','./world-ui.mjs','./palettes.mjs','./solver.mjs','./world-catalog.json','./campaign.json','./themes.json',
+  './assets/world-01.svg', './assets/world-02.svg', './assets/world-03.svg', './assets/world-04.svg', './assets/world-05.svg', './assets/world-06.svg', './assets/world-07.svg', './assets/world-08.svg', './assets/world-09.svg', './assets/world-10.svg', './assets/world-11.svg', './assets/world-12.svg',
   './assets/mascot-home.webp','./assets/capy-rooms.svg','./assets/capy-accessories.svg','./assets/skin-pompoenpoot.svg'
 ].map(absolute));
 

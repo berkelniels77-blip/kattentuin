@@ -26,6 +26,8 @@ let clockStarted = null;
 let speedBonus = 0;
 let lastWallet;
 let walletSync;
+let replayingReset = false;
+const resetKey = 'level-reset.0042';
 
 function pauseClock() {
   if (clockStarted === null) return;
@@ -35,8 +37,16 @@ function pauseClock() {
 function playedTime() {
   return Math.round(elapsedMs + (clockStarted === null ? 0 : performance.now() - clockStarted));
 }
-function nextLevel() {
+function normalNextLevel() {
   return levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed && !read(levelKey(item), {}).completed);
+}
+function resetReplay() {
+  const reset = read(resetKey, null);
+  return reset?.next < reset.until ? reset : null;
+}
+function nextLevel() {
+  const reset = resetReplay();
+  return reset ? levels[reset.next - 1] : normalNextLevel();
 }
 const levelKey = item => (item.campaign ? 'campaign.005.' : item.world && !item.legacy ? 'world.004.' : 'level.') + item.id;
 function nextPuzzle() { return nextLevel(); }
@@ -137,7 +147,9 @@ function openLevel(next, reset = false) {
   level = next;
   worldUi.clearClues();
   awardedCoins = 0;
-  const saved = reset ? {} : read(levelKey(level), {});
+  const rewind = resetReplay();
+  replayingReset = rewind?.next === level.id;
+  const saved = reset ? {} : replayingReset ? (rewind.run || {}) : read(levelKey(level), {});
   elapsedMs = saved.elapsedMs || 0;
   speedBonus = 0;
   byId('speed-award').hidden = true;
@@ -186,8 +198,18 @@ function openLevel(next, reset = false) {
   byId('back').focus();
 }
 function saveRun() {
-  const previous = read(levelKey(level), {});
   const {won, lives} = replay(level, attempts);
+  if (replayingReset) {
+    const reset = resetReplay();
+    if (reset?.next === level.id) {
+      const progress = won ? {...reset,next:level.id+1,run:null} :
+        {...reset,run:{marks,attempts,elapsedMs:playedTime()}};
+      write(resetKey,progress);
+    }
+    worldUi.showClues(level,cells,marks,attempts);
+    return 0;
+  }
+  const previous = read(levelKey(level), {});
   const alreadyCompleted = previous.completed === true || best.has(level.id);
   const reward = won && !alreadyCompleted ? 6 + 2 * lives : 0;
   write(levelKey(level), {
@@ -321,11 +343,11 @@ function placeCat(index) {
   marks[index] = hit ? 1 : 2;
   feedback(hit ? 'cat' : 'miss');
   if (state.won || !state.lives) pauseClock();
-  if (state.won && !best.has(level.id) && !read(levelKey(level), {}).completed) {
+  if (state.won && !replayingReset && !best.has(level.id) && !read(levelKey(level), {}).completed) {
     speedBonus=speedPoints(worldUi.speedProfile(level),playedTime());
   }
   awardedCoins = saveRun();
-  if (state.won) {
+  if (state.won && !replayingReset) {
     const points = runScore(level, attempts);
     if (points > (best.get(level.id)?.score ?? 0)) {
       best.set(level.id, {score:points, attempts:attempts.slice(), catalog:level.campaign?'005':undefined});
@@ -342,7 +364,9 @@ function placeCat(index) {
       {duration:330});
   }
   if (state.won) {
-    weekly.win(level);
+    if (replayingReset) {
+      if (profile) syncRanking().catch(() => {});
+    } else weekly.win(level);
     refreshWallet();
     celebrate();
     feedback('win');
@@ -396,7 +420,7 @@ function render(message = '') {
   byId('done').hidden = !(won && !next);
   byId('retry').hidden = lives !== 0;
   byId('feedback').textContent = won
-    ? ('Alle katten zitten goed. +' + runScore(level, attempts) + ' punten.') + (awardedCoins ? ' +' + awardedCoins + ' muntjes!' : '')
+    ? (replayingReset ? 'Opnieuw opgelost! Je kunt verder.' : 'Alle katten zitten goed. +' + runScore(level, attempts) + ' punten.') + (awardedCoins ? ' +' + awardedCoins + ' muntjes!' : '')
     : !lives ? 'Je visjes zijn op. Nog een keer?' : message || 'Tik of sleep voor kruisjes. Dubbeltik voor een kat.';
 }
 
@@ -534,18 +558,17 @@ window.addEventListener('storage', event => {
 });
 
 const feedback = initFeedback(read, write);
-const weekly=initWeekly({read,write,transact,refreshWallet,openPuzzle(credited) {
+const weekly=initWeekly({read,write,transact,refreshWallet,openPuzzle() {
   const item=nextLevel();
   if (!item) return false;
-  const previous=read(levelKey(item),{});
-  openLevel(item,previous.completed===true);
+  openLevel(item);
   return true;
 }});
 const updateSleep = initCapybara({read, write, coins, refreshWallet, transact, feedback, rewards:weekly});
-const visitWheel = initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback});
+const visitWheel = initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback, onSpin:weekly.spin});
 const news = byId('news-dialog');
 byId('news-open').onclick = () => news.showModal();
-news.addEventListener('close', () => write('seen-news-0041', true));
+news.addEventListener('close', () => write('seen-news-0042', true));
 
 const rankingUrl = location.origin === 'https://berkelniels77-blip.github.io'
   ? 'https://kattentuin-klassement.kattentuin-berkelniels77.workers.dev/api/leaderboard'
@@ -681,17 +704,22 @@ try {
     if (points>(best.get(item.id)?.score || 0)) best.set(item.id,{score:points,attempts,catalog:'005'});
   }
   // Preserve an unfinished old board, including its marks, fish and timer.
-  const pending=nextLevel();
+  const pending=normalNextLevel();
   if (pending && !read('campaign.005.'+pending.id,null)) {
     const old=read('level.'+pending.id,null);
     if (old && !old.completed && (old.attempts?.length || old.marks?.some(Boolean))) {
       levels[pending.id-1]={...classicLevels[pending.id-1],world:pending.world,legacy:true};
     }
   }
+  if (!read(resetKey,null)) {
+    const oldLevel=pending?.id ?? levels.length+1;
+    write(resetKey,oldLevel>240 ? {next:238,until:oldLevel} : {next:0,until:0});
+  }
   profile = read('ranking', null);
+  if (profile && resetReplay()) syncRanking().catch(() => {});
   byId('play').disabled = false;
   showHome(false);
-  if (!read('seen-news-0041', false)) news.showModal();
+  if (!read('seen-news-0042', false)) news.showModal();
   updateSleep();
   visitWheel();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));

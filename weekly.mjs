@@ -1,6 +1,6 @@
-import {activeWeek,claimDaily,createState,dailyOffer,dutchDay,event,isoDay,itemLabels,nextMidnight,
-  recordWeekPuzzle,validateThemes,visit} from './economy.mjs';
-import {currentPassLevel,puzzleXp,requiredXp,stageCount,stageReward,trackSkin,unlockMilestones} from './pass-track.mjs';
+import {activeWeek,claimDaily,claimQuest,createState,dailyOffer,dutchDay,event,isoDay,itemLabels,nextMidnight,
+  recordWeekPuzzle,validateThemes,visit,weekStart} from './economy.mjs';
+import {currentPassLevel,puzzleXp,requiredXp,stageCount,stageReward,trackSkin,stageClaimStatus,claimMilestone} from './pass-track.mjs';
 import {speedProfile} from './world-ui.mjs';
 
 const key='weekly.004';
@@ -21,7 +21,6 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
   const stored=()=>read(key,null);
   const data=()=>stored() || createState();
   let config, pickedWeek, pickedStage, displayedWeek, displayedLevel, lastPaint, lastPassData, toastTimer;
-  const seen=new Map();
 
   function enter(current) {
     const day=dutchDay(Date.now());
@@ -33,7 +32,14 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
       }
     }
     visit(current,day);
-    return activeWeek(current,config,day);
+    const active=activeWeek(current,config,day);
+    const spinDay=read('wheel',{}).spinDay;
+    const spinWeek=Number.isInteger(spinDay) && spinDay<=day ? current.weeks[isoDay(weekStart(spinDay))] : null;
+    if (spinWeek) {
+      (spinWeek.spinDays ||= {})[spinDay]=true;
+      spinWeek.events.spin=Math.max(spinWeek.events.spin || 0,Object.keys(spinWeek.spinDays).length);
+    }
+    return active;
   }
   async function change(action=()=>{}) {
     if (!config) return null;
@@ -42,7 +48,6 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
       const before=JSON.stringify(current);
       const week=enter(current);
       const result=action(current,week);
-      unlockMilestones(current,week);
       if (before!==JSON.stringify(current) && !write(key,current)) return null;
       return result;
     });
@@ -109,7 +114,8 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
     $('pass-xp').textContent=amount(week.xp)+' XP';
     $('pass-progress').max=requiredXp(stageCount);
     $('pass-progress').value=week.xp;
-    $('pass-cleared').textContent='Level '+level+' / '+stageCount;
+    const unclaimed=Array.from({length:stageCount},(_,i)=>i+1).filter(stage=>stageClaimStatus(current,week,stage)==='ready').length;
+    $('pass-cleared').textContent='Level '+level+' / '+stageCount+(unclaimed?' · '+unclaimed+' te claimen':'');
     $('pass-earn-xp').hidden=pickedWeek!==latest;
     $('pass-earn-xp').onclick=()=>{
       if (openPuzzle(week.puzzleXp || {})) pass.close();
@@ -118,20 +124,17 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
     const advanced=lastPaint!==stamp;
     if (advanced) pickedStage=level;
     lastPaint=stamp;
-    const receipt=week.track?.receipt;
-    const reveal=pickedWeek===latest && receipt && (seen.get(pickedWeek)||0)<receipt.stage;
     const list=$('tiers');
     const scroll=list.scrollLeft;
     list.replaceChildren(...Array.from({length:stageCount},(_,index)=>{
       const stage=index+1, prize=stageReward(week,stage);
-      const card=text('li','','pass-tile '+(stage===level?'available':stage<level?'cleared':'locked')+
+      const status=stageClaimStatus(current,week,stage);
+      const card=text('li','','pass-tile '+(status==='ready'?'available claim-ready':stage<=level?'cleared':'locked')+
         (stage===stageCount?' finale':''));
-      if (reveal && stage===(receipt.rewardStage || receipt.stage)) card.classList.add('pass-won');
-      if (reveal && stage===level) card.classList.add('pass-unlocked');
       const tile=text('button');
       tile.type='button';
       tile.dataset.stage=stage;
-      tile.setAttribute('aria-label','Level '+stage+' · '+(stage<=level?'Vrijgespeeld':'Op slot'));
+      tile.setAttribute('aria-label','Level '+stage+' · '+(status==='ready'?'Te claimen':status==='claimed'?'Geclaimd':stage<=level?'Vrijgespeeld':'Op slot'));
       const graphic=text('span',prize?.icon || '✦','tile-prize');
       if (stage===stageCount && skin) {
         const image=text('img');
@@ -140,7 +143,7 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
         graphic.replaceChildren(image);
       }
       tile.append(text('span',String(stage),'tile-number'),graphic,
-        text('span',stage<=level?'✓':'🔒','tile-state'),
+        text('span',status==='ready'?'🎁':stage<=level?'✓':'🔒','tile-state'),
         text('span',stage===stageCount&&skin?'Skin':prize?.label || amount(requiredXp(stage))+' XP','tile-reward'));
       tile.onclick=()=>select(stage);
       card.append(tile);
@@ -151,8 +154,18 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
       for (const tile of list.querySelectorAll('button')) tile.setAttribute('aria-pressed',Number(tile.dataset.stage)===stage);
       const prize=stageReward(week,stage), xp=requiredXp(stage);
       $('stage-title').textContent='Level '+stage+' · '+(stage===stageCount&&skin?skin.name:prize?.label || amount(xp)+' XP');
-      $('stage-info').textContent=stage<=level?'Vrijgespeeld'+(prize && current.passItems?.[prize.id]?' · In bezit bij je capibara':''):
-        pickedWeek!==latest?'Deze week is voorbij':amount(xp-week.xp)+' XP nodig uit Meowdoku ('+amount(xp)+' XP totaal)';
+      const status=stageClaimStatus(current,week,stage);
+      $('stage-info').textContent=status==='claimed'?'Al in bezit':status==='ready'?'Vrijgespeeld · klaar om te claimen':
+        stage<=level?'Mijlpaal bereikt':pickedWeek!==latest?'Deze week is voorbij':amount(xp-week.xp)+' XP nodig ('+amount(xp)+' XP totaal)';
+      const claim=$('stage-claim'), weekId=pickedWeek;
+      claim.hidden=status!=='ready';
+      claim.onclick=async()=>{
+        claim.disabled=true;
+        try {
+          const receipt=await change(state=>claimMilestone(state,state.weeks[weekId],stage));
+          if (receipt) celebrate(receipt);
+        } finally { claim.disabled=false; }
+      };
     }
     function jump(stage) {
       select(stage);
@@ -167,13 +180,22 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
     $('quests').replaceChildren(...theme.quests.map(quest=>{
       const row=text('div','','weekly-goal');
       const complete=Math.min(quest.target,week.events[quest.event] || 0);
-      row.append(text('span',quest.label),text('strong',complete===quest.target?'✓':complete+' / '+quest.target));
+      const claimed=Boolean(week.questClaims?.[quest.id]);
+      const claim=text('button',claimed?'Geclaimd':'+ '+amount(quest.xp)+' XP claimen','pass-claim');
+      claim.type='button';
+      claim.disabled=claimed || complete<quest.target;
+      const weekId=pickedWeek;
+      claim.onclick=async()=>{
+        claim.disabled=true;
+        try { await change(state=>claimQuest(state.weeks[weekId],quest.id)); }
+        finally { if (claim.isConnected) claim.disabled=claimed || complete<quest.target; }
+      };
+      const progress=text('small',complete+' / '+quest.target,'quest-progress');
+      const label=text('div');
+      label.append(text('span',quest.label),progress);
+      row.append(label,claim);
       return row;
     }));
-    if (reveal) {
-      seen.set(pickedWeek,receipt.stage);
-      celebrate(receipt);
-    }
   }
 
   function celebrate(receipt) {
@@ -182,7 +204,7 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
     const destination=receipt.skin?'Te kiezen in de Katjeswinkel':
       receipt.item?.type==='Accessoire'?'Te kiezen bij Uiterlijk':'Te vinden in het capibarahuis';
     banner.replaceChildren(text('span',receipt.item?.icon || (receipt.skin?'👑':'✦'),'unlock-icon'),
-      text('strong',prize?'Vrijgespeeld · '+prize:'Level '+receipt.stage+' vrijgespeeld'));
+      text('strong',prize?'Geclaimd · '+prize:'Level '+receipt.stage+' vrijgespeeld'));
     if (prize) {
       banner.append(text('small',destination));
       const sparks=text('div','','unlock-sparks');
@@ -251,6 +273,7 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
       return change(current=>recordWeekPuzzle(current,config,dutchDay(Date.now()),
         (level.campaign?'campaign.005.':level.world && !level.legacy?'world.004.':'level.')+level.id,puzzleXp(speedProfile(level))));
     },
+    spin:()=>change(),
     care:()=>change(current=>event(current,config,dutchDay(Date.now()),'care')),
     coins:()=>data().coins,
     items:()=>Object.values(data().passItems || {}).map(item=>({...item,passExclusive:true})),

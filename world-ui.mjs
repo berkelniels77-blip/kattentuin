@@ -1,26 +1,25 @@
 import {mechanics,logicProfile} from './solver.mjs';
 import {worlds} from './worlds.mjs';
-import {levelPalette} from './palettes.mjs';
+import {levelPalette,worldNumber} from './palettes.mjs';
 const id=name=>document.getElementById(name);
 let rulesSignature;
 export const tileColor=(level,index)=>levelPalette(level).colors[index];
-const scenery=[
- ['#eef4df','#bfd5aa','#7d9e71','☘'],['#fff0df','#efc2a1','#ce9877','❀'],
- ['#e4f5f2','#a3d3ce','#669eac','≈'],['#f0eafa','#c6b6dd','#9984b2','✿'],
- ['#fff4da','#edd29a','#c5a269','☀'],['#edf0db','#b5c798','#809674','♧'],
- ['#fff0ec','#f0c0b4','#b2d9d5','≈'],['#e6f0e8','#accbb9','#719487','♧'],
- ['#e9edfa','#b7c3df','#8a91b9','☾'],['#fcf0dd','#dcc096','#b39678','☀'],
- ['#e4eff9','#aac7dd','#819db8','✧'],['#efe9f7','#c5b4db','#9ec4b9','✦']
+const scenery = [
+  ['#dbeccc','#426d49'], ['#f8cfb6','#8b4e38'], ['#cee9e9','#2b6779'],
+  ['#e6d9f3','#695090'], ['#f9e4b2','#80551c'], ['#d9e5bc','#526a39'],
+  ['#f5d7d4','#8f4862'], ['#bed8ce','#37665a'], ['#d4dcf2','#4f598c'],
+  ['#f2d2ab','#925227'], ['#c2d6ef','#345887'], ['#d0c8e9','#5c478a']
 ];
 function atmosphere(level) {
- if(!level)return;
- const world=Math.floor((level.id-1)/50)+1;
- const [sky,hill,front,motif]=scenery[(world-1)%scenery.length];
- const root=document.documentElement;
- root.dataset.world=world;
- for(const [name,value] of Object.entries({sky,hill,front}))root.style.setProperty('--world-'+name,value);
- root.style.setProperty('--world-motif','"'+motif+'"');
- return world;
+  if (!level) return;
+  const world=worldNumber(level);
+  const [sky,accent]=scenery[world-1];
+  const root=document.documentElement;
+  root.dataset.world=world;
+  root.style.setProperty('--world-sky',sky);
+  root.style.setProperty('--world-accent',accent);
+  root.style.setProperty('--world-art',`url("./assets/world-${String(world).padStart(2,'0')}.svg")`);
+  return world;
 }
 export function homeWorld(level) {
  const world=atmosphere(level);

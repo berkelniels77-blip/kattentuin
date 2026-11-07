@@ -48,7 +48,7 @@ export function drawPrize(state, now = Date.now(), random = crypto) {
   }
 }
 
-export function initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback}) {
+export function initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback, onSpin}) {
   const $ = id => document.getElementById(id);
   const dialog = $('wheel-dialog');
   const disk = $('wheel-disk');
@@ -122,6 +122,7 @@ export function initWheel({read, write, transact, refreshWallet, chooseSkin, sel
       return result && write('wheel', result) ? result : null;
     });
     if (!next) { update(); return; }
+    onSpin?.();
     spinning = true;
     update();
     $('wheel-result').textContent = 'Spannend…';
