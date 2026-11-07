@@ -16,7 +16,7 @@ let lastTap = null;
 let stroke = null;
 const doubleTapMs = 310;
 let levels = [], level, attempts, marks, cells, regionIcons;
-let worldLevels = [];
+let worldLevels = [], classicLevels = [];
 let best = new Map();
 let profile;
 let flash;
@@ -36,11 +36,10 @@ function playedTime() {
   return Math.round(elapsedMs + (clockStarted === null ? 0 : performance.now() - clockStarted));
 }
 function nextLevel() {
-  return levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed);
+  return levels.find(item => !best.has(item.id) && !read('level.' + item.id, {}).completed && !read(levelKey(item), {}).completed);
 }
-const levelKey = item => (item.world ? 'world.004.' : 'level.') + item.id;
-const nextWorld = () => worldLevels.find(item => !read(levelKey(item), {}).completed);
-function nextPuzzle() { return level?.world ? nextWorld() : nextLevel(); }
+const levelKey = item => (item.campaign ? 'campaign.005.' : item.world && !item.legacy ? 'world.004.' : 'level.') + item.id;
+function nextPuzzle() { return nextLevel(); }
 function speedMeter() {
   const meter=byId('puzzle-speed');
   meter.hidden=!level || byId('game').hidden || !!replay(level,attempts)?.won || !replay(level,attempts)?.lives;
@@ -121,12 +120,9 @@ function showHome(moveFocus = true) {
   play.textContent = next ? 'Speel level ' + next.id : 'Alle katten thuis!';
   play.disabled = !next;
   play.onclick = () => { if (next) openLevel(next); };
-  const world=nextWorld();
-  byId('world-open').textContent=world?'Wereldreis · Level '+world.id:'Wereldreis voltooid';
-  byId('world-open').disabled=!world;
-  byId('world-open').onclick=()=>{ if (world) openLevel(world); };
+  worldUi.homeWorld(next || levels.at(-1));
   byId('home-score').textContent = scoreText(score());
-  const bonus = [...levels,...worldLevels].reduce((total, item) => total + (read(levelKey(item), {}).speedBonus || 0), 0);
+  const bonus = [...levels.filter(item=>item.campaign),...classicLevels,...worldLevels].reduce((total, item) => total + (read(levelKey(item), {}).speedBonus || 0), 0);
   byId('home-speed').hidden = !bonus;
   byId('home-speed').textContent = '⚡ ' + scoreText(bonus) + ' snelheidspunten';
   refreshWallet();
@@ -177,7 +173,7 @@ function openLevel(next, reset = false) {
   board.replaceChildren(...cells);
   byId('home').hidden = true;
   byId('game').hidden = false;
-  if (!level.world) write('active', level.id);
+  write('active', level.id);
   if (reset) saveRun();
   render();
   const introduction=worldUi.introduce(level,read,write);
@@ -192,7 +188,7 @@ function openLevel(next, reset = false) {
 function saveRun() {
   const previous = read(levelKey(level), {});
   const {won, lives} = replay(level, attempts);
-  const alreadyCompleted = previous.completed === true || (!level.world && best.has(level.id));
+  const alreadyCompleted = previous.completed === true || best.has(level.id);
   const reward = won && !alreadyCompleted ? 6 + 2 * lives : 0;
   write(levelKey(level), {
     marks, attempts, completed: alreadyCompleted || won,
@@ -325,15 +321,15 @@ function placeCat(index) {
   marks[index] = hit ? 1 : 2;
   feedback(hit ? 'cat' : 'miss');
   if (state.won || !state.lives) pauseClock();
-  if (state.won && (level.world || !best.has(level.id)) && !read(levelKey(level), {}).completed) {
+  if (state.won && !best.has(level.id) && !read(levelKey(level), {}).completed) {
     speedBonus=speedPoints(worldUi.speedProfile(level),playedTime());
   }
   awardedCoins = saveRun();
   if (state.won) {
     const points = runScore(level, attempts);
-    if (!level.world && points > (best.get(level.id)?.score ?? 0)) {
-      best.set(level.id, {score:points, attempts:attempts.slice()});
-      write('best.' + level.id, attempts);
+    if (points > (best.get(level.id)?.score ?? 0)) {
+      best.set(level.id, {score:points, attempts:attempts.slice(), catalog:level.campaign?'005':undefined});
+      write((level.campaign?'best.005.':'best.') + level.id, attempts);
       if (profile) syncRanking().catch(() => {});
     }
   }
@@ -400,7 +396,7 @@ function render(message = '') {
   byId('done').hidden = !(won && !next);
   byId('retry').hidden = lives !== 0;
   byId('feedback').textContent = won
-    ? (level.world?'Wereldlevel voltooid.':'Alle katten zitten goed. +' + runScore(level, attempts) + ' punten.') + (awardedCoins ? ' +' + awardedCoins + ' muntjes!' : '')
+    ? ('Alle katten zitten goed. +' + runScore(level, attempts) + ' punten.') + (awardedCoins ? ' +' + awardedCoins + ' muntjes!' : '')
     : !lives ? 'Je visjes zijn op. Nog een keer?' : message || 'Tik of sleep voor kruisjes. Dubbeltik voor een kat.';
 }
 
@@ -450,9 +446,9 @@ function inventory() {
 }
 function selectedSkin() { return inventory().selected; }
 function coins(wardrobe = inventory()) {
-  const earned = [...levels,...worldLevels].reduce((total, item) => {
+  const earned = [...levels.filter(item=>item.campaign),...classicLevels,...worldLevels].reduce((total, item) => {
     const saved = read(levelKey(item), {});
-    if (!saved.completed && (item.world || !best.has(item.id))) return total;
+    if (!saved.completed && (item.world || !runScore(item,read('best.'+item.id,null)))) return total;
     return total + (saved.coinReward ?? 10);
   }, 0);
   return earned + weekly.coins() + (read('wheel', {}).coins || 0) - Object.values(wardrobe.paid).reduce((sum, amount) => sum + amount, 0) - (read('capybara', null)?.spent || 0);
@@ -539,9 +535,7 @@ window.addEventListener('storage', event => {
 
 const feedback = initFeedback(read, write);
 const weekly=initWeekly({read,write,transact,refreshWallet,openPuzzle(credited) {
-  const all=[...levels,...worldLevels];
-  const next=[nextLevel(),nextWorld()].find(item=>item && !Object.hasOwn(credited,levelKey(item)));
-  const item=next || all.find(candidate=>!Object.hasOwn(credited,levelKey(candidate)));
+  const item=nextLevel();
   if (!item) return false;
   const previous=read(levelKey(item),{});
   openLevel(item,previous.completed===true);
@@ -551,7 +545,7 @@ const updateSleep = initCapybara({read, write, coins, refreshWallet, transact, f
 const visitWheel = initWheel({read, write, transact, refreshWallet, chooseSkin, selectedSkin, feedback});
 const news = byId('news-dialog');
 byId('news-open').onclick = () => news.showModal();
-news.addEventListener('close', () => write('seen-news-004', true));
+news.addEventListener('close', () => write('seen-news-0041', true));
 
 const rankingUrl = location.origin === 'https://berkelniels77-blip.github.io'
   ? 'https://kattentuin-klassement.kattentuin-berkelniels77.workers.dev/api/leaderboard'
@@ -565,7 +559,7 @@ function syncRanking(player = profile) {
   return rankingRequest({
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({...player, currentLevel:nextLevel()?.id ?? levels.length, coins:Math.max(0, coins()), runs: [...best].map(([id, run]) => ({id, attempts:run.attempts}))})
+    body: JSON.stringify({...player, currentLevel:nextLevel()?.id ?? levels.length, coins:Math.max(0, coins()), runs: [...best].map(([id, run]) => ({id, attempts:run.attempts, catalog:run.catalog}))})
   });
 }
 function renderRanking({players}, message) {
@@ -668,23 +662,36 @@ async function setupUpdates() {
 
 
 try {
-  const [classic,worlds]=await Promise.all(['./levels.json','./world-catalog.json'].map(async path=>{
+  const [classic,worlds,campaign]=await Promise.all(['./levels.json','./world-catalog.json','./campaign.json'].map(async path=>{
     const response=await fetch(path);
     if (!response.ok) throw Error('Puzzels ontbreken');
     return response.json();
   }));
-  levels = classic;
+  classicLevels = classic;
+  levels = campaign.puzzles.map(item=>({...item,campaign:true}));
   worldLevels=worlds.puzzles;
   await weekly.start();
-  for (const item of levels) {
+  for (const item of classicLevels) {
     const attempts = read('best.' + item.id, null);
     const points = runScore(item, attempts);
     if (points) best.set(item.id, {score:points, attempts});
   }
+  for (const item of levels) {
+    const attempts=read('best.005.'+item.id,null), points=runScore(item,attempts);
+    if (points>(best.get(item.id)?.score || 0)) best.set(item.id,{score:points,attempts,catalog:'005'});
+  }
+  // Preserve an unfinished old board, including its marks, fish and timer.
+  const pending=nextLevel();
+  if (pending && !read('campaign.005.'+pending.id,null)) {
+    const old=read('level.'+pending.id,null);
+    if (old && !old.completed && (old.attempts?.length || old.marks?.some(Boolean))) {
+      levels[pending.id-1]={...classicLevels[pending.id-1],world:pending.world,legacy:true};
+    }
+  }
   profile = read('ranking', null);
   byId('play').disabled = false;
   showHome(false);
-  if (!read('seen-news-004', false)) news.showModal();
+  if (!read('seen-news-0041', false)) news.showModal();
   updateSleep();
   visitWheel();
   setupUpdates().catch(error => console.warn('Offline modus kon niet worden gestart.', error));

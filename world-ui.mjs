@@ -1,13 +1,35 @@
 import {mechanics,logicProfile} from './solver.mjs';
-import {worlds,worldColors} from './worlds.mjs';
+import {worlds} from './worlds.mjs';
+import {levelPalette} from './palettes.mjs';
 const id=name=>document.getElementById(name);
 let rulesSignature;
-const palettes=worlds.map(worldColors);
-export const tileColor=(level,index)=>palettes[level.world-1]?.[index];
+export const tileColor=(level,index)=>levelPalette(level).colors[index];
+const scenery=[
+ ['#eef4df','#bfd5aa','#7d9e71','☘'],['#fff0df','#efc2a1','#ce9877','❀'],
+ ['#e4f5f2','#a3d3ce','#669eac','≈'],['#f0eafa','#c6b6dd','#9984b2','✿'],
+ ['#fff4da','#edd29a','#c5a269','☀'],['#edf0db','#b5c798','#809674','♧'],
+ ['#fff0ec','#f0c0b4','#b2d9d5','≈'],['#e6f0e8','#accbb9','#719487','♧'],
+ ['#e9edfa','#b7c3df','#8a91b9','☾'],['#fcf0dd','#dcc096','#b39678','☀'],
+ ['#e4eff9','#aac7dd','#819db8','✧'],['#efe9f7','#c5b4db','#9ec4b9','✦']
+];
+function atmosphere(level) {
+ if(!level)return;
+ const world=Math.floor((level.id-1)/50)+1;
+ const [sky,hill,front,motif]=scenery[(world-1)%scenery.length];
+ const root=document.documentElement;
+ root.dataset.world=world;
+ for(const [name,value] of Object.entries({sky,hill,front}))root.style.setProperty('--world-'+name,value);
+ root.style.setProperty('--world-motif','"'+motif+'"');
+ return world;
+}
+export function homeWorld(level) {
+ const world=atmosphere(level);
+ if(world)id('home-world').textContent='Wereld '+world+' · '+worlds[world-1].name+' · '+((world-1)*50+1)+'–'+world*50;
+}
 export function worldBadge(level) {
-  const label=id('world-badge');
-  label.hidden=!level.world;
-  if (level.world) label.textContent='Wereld '+level.world+' · '+worlds[level.world-1].name;
+ const world=atmosphere(level),label=id('world-badge');
+ label.hidden=false;
+ label.textContent='Wereld '+world+' · '+worlds[world-1].name+' · '+levelPalette(level).name;
 }
 const profiles=new Map();
 function speedProfile(level) {

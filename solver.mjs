@@ -93,7 +93,8 @@ export function validatePlacement(puzzle, cats) {
 export function logicProfile(puzzle) {
   const groups = groupsFor(puzzle);
   const neighbors = Array.from({length:puzzle.n**2}, (_, cell) => nearby(cell,puzzle.n));
-  function propagate(state) {
+  const steps=[];
+  function propagate(state, record=false) {
     let changed = true;
     function mark(cell, value) {
       if (state[cell] && state[cell] !== value) return false;
@@ -102,7 +103,7 @@ export function logicProfile(puzzle) {
     }
     while (changed) {
       changed = false;
-      for (const group of groups) {
+      for (const [groupIndex,group] of groups.entries()) {
         let placed = 0;
         const free = [];
         for (const cell of group.cells) {
@@ -111,6 +112,7 @@ export function logicProfile(puzzle) {
         }
         if (placed > group.count || placed + free.length < group.count) return false;
         if (placed === group.count || placed + free.length === group.count) {
+          if(record && free.length) steps.push((groupIndex<puzzle.n?'row':groupIndex<puzzle.n*2?'column':groupIndex<puzzle.n*3?'region':'clue')+':'+(placed===group.count?'exclude':'place')+':'+free.length);
           for (const cell of free) if (!mark(cell, placed === group.count ? -1 : 1)) return false;
         }
       }
@@ -121,7 +123,7 @@ export function logicProfile(puzzle) {
     return true;
   }
   const state = new Int8Array(puzzle.n**2);
-  propagate(state);
+  propagate(state,true);
   const countUnknown = () => state.reduce((sum,cell) => sum + Number(!cell),0);
   const afterBasic = countUnknown();
   let probes = 0, deductions = 0;
@@ -136,8 +138,9 @@ export function logicProfile(puzzle) {
         branch[cell] = assumption;
         probes++;
         if (!propagate(branch)) {
+          steps.push('contradiction:'+assumption+':'+cell);
           state[cell] = -assumption;
-          propagate(state);
+          propagate(state,true);
           deductions++;
           changed = true;
           break;
@@ -147,6 +150,6 @@ export function logicProfile(puzzle) {
     }
   }
   const remaining = countUnknown();
-  return {afterBasic, probes, deductions, remaining,
+  return {afterBasic, probes, deductions, remaining, steps,
     rating:afterBasic*2 + deductions*3 + Math.round(probes/4) + remaining*5};
 }

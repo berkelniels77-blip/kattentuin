@@ -232,3 +232,22 @@ dialog > .pass-hud { position:sticky; top:0; z-index:5; }
   20% { opacity:.85; }
   100% { opacity:0; transform:translate(var(--x),var(--y)) rotate(145deg); }
 }
+
+/* The normal campaign lives in a changing landscape, without a second mode. */
+:root { background:var(--world-sky,#f7f1e9); }
+body::before { content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+ background:radial-gradient(ellipse 100% 32% at -10% 105%,var(--world-front) 0 98%,transparent 100%),radial-gradient(ellipse 100% 30% at 110% 100%,var(--world-hill) 0 98%,transparent 100%),linear-gradient(160deg,#ffffff99,transparent 65%); }
+body::after { content:var(--world-motif); position:fixed; pointer-events:none; z-index:-1; right:6vw; top:18vh; font-size:clamp(80px,22vw,160px); color:var(--world-front); opacity:.18; transform:rotate(-12deg); }
+.world-caption { font-size:.78rem; font-weight:750; text-align:center; opacity:.85; margin:2px 0 8px; }
+[data-theme=dark] { background:color-mix(in srgb,var(--world-sky) 13%,#171522); }
+[data-theme=dark] body::before { opacity:.28; background:radial-gradient(ellipse 100% 32% at -10% 105%,var(--world-front) 0 98%,transparent 100%),radial-gradient(ellipse 100% 30% at 110% 100%,var(--world-hill) 0 98%,transparent 100%); }
+[data-theme=dark] .cell,[data-theme=dark] .region-strip span { background:color-mix(in srgb,var(--tile) 80%,#241f32); }
+.cell { outline:1px solid #ffffff25; outline-offset:-1px; }
+.puzzle-forbidden { box-shadow:inset 0 0 0 2px #a73545; }
+#puzzle-rules { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 10px; }
+#puzzle-rules span { border-radius:8px; padding:3px 7px; background:var(--white); font-weight:700; }
+.game { padding-top:calc(30px + env(safe-area-inset-top)); }
+@media(max-height:800px) {
+  .game .board { width:min(100%,max(180px,calc(100dvh - 350px - env(safe-area-inset-top) - env(safe-area-inset-bottom)))); }
+  .game:has(#next:not([hidden]),#retry:not([hidden]),#done:not([hidden])) .board { width:min(100%,max(170px,calc(100dvh - 410px - env(safe-area-inset-top) - env(safe-area-inset-bottom)))); }
+}

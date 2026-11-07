@@ -249,7 +249,7 @@ export function initWeekly({read,write,transact,refreshWallet,openPuzzle}) {
     },
     win(level) {
       return change(current=>recordWeekPuzzle(current,config,dutchDay(Date.now()),
-        (level.world?'world.004.':'level.')+level.id,puzzleXp(speedProfile(level))));
+        (level.campaign?'campaign.005.':level.world && !level.legacy?'world.004.':'level.')+level.id,puzzleXp(speedProfile(level))));
     },
     care:()=>change(current=>event(current,config,dutchDay(Date.now()),'care')),
     coins:()=>data().coins,
